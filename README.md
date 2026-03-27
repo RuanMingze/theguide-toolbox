@@ -108,7 +108,6 @@ OPENWEATHER_API_KEY=your_api_key_here
 - ✅ **快速响应** - 无需网络请求，即时处理
 - ✅ **免费部署** - 可部署到 Cloudflare Pages，零成本
 - ✅ **响应式设计** - 支持桌面和移动端
-- ✅ **暗色主题** - 支持暗色/亮色主题切换
 
 ## 🔒 隐私说明
 
@@ -130,6 +129,7 @@ RuanMingze（Ruanm）
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
+Issue 地址：https://github.com/RuanMingze/theguide-toolbox/issues
 
 ---
 
