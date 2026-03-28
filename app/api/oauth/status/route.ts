@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+export const runtime = 'edge'
+
 export async function GET(request: NextRequest) {
   try {
     const accessToken = request.cookies.get('oauth_access_token')?.value
