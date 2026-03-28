@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Navbar } from "@/components/navbar"
 import { useAuth } from "@/components/auth-provider"
 import { useSettings } from "@/hooks/use-settings"
+import { useTranslation } from "@/hooks/use-translation"
 import { TimeDisplay } from "@/components/time-display"
 import { 
   Cloud, 
@@ -24,9 +25,10 @@ import {
   X
 } from "lucide-react"
 import Link from "next/link"
+import { festivalTranslations } from "@/lib/translations"
 
-// 节日数据库
-const festivals: Record<string, { name: string; description: string }> = {
+// 中文节日数据库
+const chineseFestivals: Record<string, { name: string; description: string }> = {
   // 公历节日
   "0-1": { name: "元旦", description: "元旦，即公历的 1 月 1 日，是世界多数国家通称的'新年'。元，谓'始'，凡数之始称为'元'；旦，谓'日'；'元旦'即'初始之日'的意思。" },
   "2-8": { name: "国际妇女节", description: "三八国际妇女节，全称'联合国妇女权益和国际和平日'，是为庆祝妇女在经济、政治和社会等领域做出的重要贡献和取得的巨大成就而设立的节日。" },
@@ -45,8 +47,8 @@ const festivals: Record<string, { name: string; description: string }> = {
   "12-25": { name: "圣诞节", description: "圣诞节又称耶诞节，译名为'基督弥撒'，西方传统节日，在每年 12 月 25 日。弥撒是教会的一种礼拜仪式。圣诞节是一个宗教节，因为把它当作耶稣的诞辰来庆祝，故名'耶诞节'。" },
 }
 
-// 农历节日（需要特殊处理）
-const lunarFestivals: Record<string, { name: string; description: string }> = {
+// 中文农历节日
+const chineseLunarFestivals: Record<string, { name: string; description: string }> = {
   "1-1": { name: "春节", description: "春节，即农历新年，是一年之岁首、传统意义上的年节。俗称新春、新年、新岁、岁旦、年禧、大年等，口头上又称度岁、庆岁、过年、过大年。春节历史悠久，由上古时代岁首祈年祭祀演变而来。" },
   "1-15": { name: "元宵节", description: "元宵节，又称上元节、小正月、元夕或灯节，为每年农历正月十五日，是中国春节年俗中最后一个重要节令。元宵节是中国与汉字文化圈地区以及海外华人的传统节日之一。" },
   "5-5": { name: "端午节", description: "端午节，又称端阳节、龙舟节、重午节、龙节、正阳节、天中节等，节期在农历五月初五，是中国民间的传统节日。端午节源自天象崇拜，由上古时代祭龙演变而来。" },
@@ -106,7 +108,7 @@ function getLunarDaysInMonth(year: number, month: number): number {
 }
 
 // 日历组件
-function Calendar() {
+function Calendar({ lang }: { lang: string }) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [hoveredDay, setHoveredDay] = useState<number | null>(null)
   const today = new Date()
@@ -124,16 +126,27 @@ function Calendar() {
 
   const getFestival = (day: number) => {
     const solarKey = `${month}-${day}`
-    if (festivals[solarKey]) {
-      return festivals[solarKey]
-    }
-    
-    // 检查农历节日
     const date = new Date(year, month, day)
     const lunar = getLunarDate(date)
-    const lunarKey = `${lunar.month}-${lunar.day}`
-    if (lunarFestivals[lunarKey]) {
-      return lunarFestivals[lunarKey]
+    const lunarKey = `lunar-${lunar.month}-${lunar.day}`
+    
+    // 根据语言选择节日数据库
+    if (lang === 'en') {
+      // 使用英文翻译
+      if (festivalTranslations[solarKey]) {
+        return festivalTranslations[solarKey]
+      }
+      if (festivalTranslations[lunarKey]) {
+        return festivalTranslations[lunarKey]
+      }
+    } else {
+      // 使用中文
+      if (chineseFestivals[solarKey]) {
+        return chineseFestivals[solarKey]
+      }
+      if (chineseLunarFestivals[lunarKey]) {
+        return chineseLunarFestivals[lunarKey]
+      }
     }
     
     return null
@@ -171,8 +184,12 @@ function Calendar() {
     )
   }
 
-  const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
-  const weekdayNames = ["日", "一", "二", "三", "四", "五", "六"]
+  const monthNames = lang === 'en' 
+    ? ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    : ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
+  const weekdayNames = lang === 'en'
+    ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    : ["日", "一", "二", "三", "四", "五", "六"]
 
   const hoveredFestival = hoveredDay ? getFestival(hoveredDay) : null
 
@@ -180,7 +197,7 @@ function Calendar() {
     <div className="rounded-2xl bg-card p-6 shadow-sm border border-border">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-foreground">
-          {year}年 {monthNames[month]}
+          {year}{lang === 'en' ? ', ' : '年'}{monthNames[month]}
         </h3>
         <div className="flex gap-1">
           <button
@@ -216,9 +233,10 @@ function Calendar() {
 }
 
 // 天气组件
-function Weather() {
+function Weather({ lang }: { lang: string }) {
   const [isMounted, setIsMounted] = useState(false)
   const [location, setLocation] = useState<string | null>(null)
+  const [weatherLang, setWeatherLang] = useState(lang)
   const [weather, setWeather] = useState({
     temp: 22,
     condition: "晴",
@@ -235,6 +253,17 @@ function Weather() {
     loading: true,
     error: null
   })
+
+  useEffect(() => {
+    // 从 Cookie 读取语言设置
+    const cookieLang = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('NEXT_LOCALE='))
+      ?.split('=')[1]
+    if (cookieLang) {
+      setWeatherLang(cookieLang)
+    }
+  }, [])
 
   useEffect(() => {
     setIsMounted(true)
@@ -278,14 +307,31 @@ function Weather() {
           Fog: "雾"
         }
 
-        const condition = weatherConditionMap[data.current.weather] || "多云"
+        const weatherConditionMapEn: Record<string, string> = {
+          Clear: "Sunny",
+          Clouds: "Cloudy",
+          Rain: "Rainy",
+          Drizzle: "Drizzly",
+          Thunderstorm: "Stormy",
+          Snow: "Snowy",
+          Mist: "Misty",
+          Fog: "Foggy"
+        }
+
+        const condition = weatherLang === 'en' 
+          ? (weatherConditionMapEn[data.current.weather] || "Cloudy")
+          : (weatherConditionMap[data.current.weather] || "多云")
 
         const forecast = data.forecast.slice(0, 3).map((item: any, index: number) => {
-          const days = ["今天", "明天", "后天", "大后天", "第五天"]
+          const days = weatherLang === 'en'
+            ? ["Today", "Tomorrow", "Day after", "Day 4", "Day 5"]
+            : ["今天", "明天", "后天", "大后天", "第五天"]
           return {
-            day: days[index] || "未知",
+            day: days[index] || (weatherLang === 'en' ? "Unknown" : "未知"),
             temp: item.temp,
-            condition: weatherConditionMap[item.weather] || "多云"
+            condition: weatherLang === 'en'
+              ? (weatherConditionMapEn[item.weather] || "Cloudy")
+              : (weatherConditionMap[item.weather] || "多云")
           }
         })
 
@@ -306,13 +352,13 @@ function Weather() {
         setWeather(prev => ({
           ...prev,
           loading: false,
-          error: "天气数据加载失败"
+          error: weatherLang === 'en' ? "Failed to load weather" : "天气数据加载失败"
         }))
       }
     }
 
     fetchWeather()
-  }, [location])
+  }, [location, weatherLang])
 
   const getWeatherIcon = (condition: string) => {
     switch (condition) {
@@ -337,7 +383,9 @@ function Weather() {
   if (!isMounted || !location) {
     return (
       <div className="rounded-2xl bg-card p-6 shadow-sm border border-border">
-        <div className="text-center text-muted-foreground">正在获取位置...</div>
+        <div className="text-center text-muted-foreground">
+          {lang === 'en' ? 'Getting location...' : '正在获取位置...'}
+        </div>
       </div>
     )
   }
@@ -358,8 +406,8 @@ function Weather() {
           </div>
         </div>
         <div className="text-right text-sm text-muted-foreground">
-          <div>最高 {weather.high}°</div>
-          <div>最低 {weather.low}°</div>
+          <div>{lang === 'en' ? 'High' : '最高'} {weather.high}°</div>
+          <div>{lang === 'en' ? 'Low' : '最低'} {weather.low}°</div>
         </div>
       </div>
 
@@ -367,28 +415,30 @@ function Weather() {
         <div className="flex items-center gap-2">
           <Droplets className="h-4 w-4 text-blue-400" />
           <div>
-            <div className="text-xs text-muted-foreground">湿度</div>
+            <div className="text-xs text-muted-foreground">{lang === 'en' ? 'Humidity' : '湿度'}</div>
             <div className="text-sm font-medium text-foreground">{weather.humidity}%</div>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Wind className="h-4 w-4 text-accent" />
           <div>
-            <div className="text-xs text-muted-foreground">风速</div>
+            <div className="text-xs text-muted-foreground">{lang === 'en' ? 'Wind' : '风速'}</div>
             <div className="text-sm font-medium text-foreground">{weather.wind} km/h</div>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Thermometer className="h-4 w-4 text-red-400" />
           <div>
-            <div className="text-xs text-muted-foreground">体感</div>
+            <div className="text-xs text-muted-foreground">{lang === 'en' ? 'Feels like' : '体感'}</div>
             <div className="text-sm font-medium text-foreground">{weather.temp + 1}°</div>
           </div>
         </div>
       </div>
 
       <div className="mt-6 border-t border-border pt-4">
-        <h4 className="mb-3 text-sm font-medium text-foreground">未来天气</h4>
+        <h4 className="mb-3 text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Forecast' : '未来天气'}
+        </h4>
         <div className="flex justify-between">
           {weather.forecast.map((day, index) => (
             <div key={index} className="flex flex-col items-center gap-1">
@@ -445,6 +495,10 @@ export default function HomePage() {
   const [glassOpacity, setGlassOpacity] = useState<number>(10)
   const [todayFestival, setTodayFestival] = useState<{name: string; description: string} | null>(null)
   const [showNotification, setShowNotification] = useState(false)
+  const [greeting, setGreeting] = useState<string>('欢迎回来')
+  
+  // 翻译 Hook
+  const { lang, t, loading: translationLoading } = useTranslation()
   
   // 应用全局设置
   useSettings()
@@ -460,27 +514,59 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
+    // 根据时间段设置问候语
+    const hour = new Date().getHours()
+    let greetingText = '欢迎回来'
+    
+    if (hour >= 5 && hour < 9) {
+      greetingText = '早上好'
+    } else if (hour >= 9 && hour < 12) {
+      greetingText = '上午好'
+    } else if (hour >= 12 && hour < 14) {
+      greetingText = '中午好'
+    } else if (hour >= 14 && hour < 18) {
+      greetingText = '下午好'
+    } else if (hour >= 18 && hour < 22) {
+      greetingText = '晚上好'
+    } else {
+      greetingText = '夜深了'
+    }
+    
+    setGreeting(greetingText)
+  }, [])
+
+  useEffect(() => {
     // 检查今天是否有节日
     const today = new Date()
     const month = today.getMonth()
     const day = today.getDate()
     const solarKey = `${month}-${day}`
-    
-    // 检查公历节日
-    if (festivals[solarKey]) {
-      setTodayFestival(festivals[solarKey])
-      setShowNotification(true)
-      return
-    }
-    
-    // 检查农历节日
     const lunar = getLunarDate(today)
-    const lunarKey = `${lunar.month}-${lunar.day}`
-    if (lunarFestivals[lunarKey]) {
-      setTodayFestival(lunarFestivals[lunarKey])
-      setShowNotification(true)
+    const lunarKey = `lunar-${lunar.month}-${lunar.day}`
+    
+    // 根据语言选择节日数据库
+    if (lang === 'en') {
+      if (festivalTranslations[solarKey]) {
+        setTodayFestival(festivalTranslations[solarKey])
+        setShowNotification(true)
+        return
+      }
+      if (festivalTranslations[lunarKey]) {
+        setTodayFestival(festivalTranslations[lunarKey])
+        setShowNotification(true)
+      }
+    } else {
+      if (chineseFestivals[solarKey]) {
+        setTodayFestival(chineseFestivals[solarKey])
+        setShowNotification(true)
+        return
+      }
+      if (chineseLunarFestivals[lunarKey]) {
+        setTodayFestival(chineseLunarFestivals[lunarKey])
+        setShowNotification(true)
+      }
     }
-  }, [])
+  }, [lang])
 
   const closeNotification = () => {
     setShowNotification(false)
@@ -496,8 +582,12 @@ export default function HomePage() {
           <div className="rounded-lg bg-primary p-4 text-primary-foreground shadow-lg">
             <div className="flex items-start gap-3">
               <div className="flex-1">
-                <h4 className="font-semibold">{todayFestival.name}到了！</h4>
-                <p className="mt-1 text-sm opacity-90">节日快乐！</p>
+                <h4 className="font-semibold">
+                  {todayFestival.name}{lang === 'en' ? ' is here!' : '到了！'}
+                </h4>
+                <p className="mt-1 text-sm opacity-90">
+                  {lang === 'en' ? 'Happy holiday!' : '节日快乐！'}
+                </p>
               </div>
               <button
                 onClick={closeNotification}
@@ -528,14 +618,14 @@ export default function HomePage() {
                   </div>
                 )}
                 <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                  欢迎回来，<span className="text-primary">{user.name}</span>
+                  {t(greeting)}，<span className="text-primary">{user.name}</span>
                 </h1>
               </div>
             </div>
           ) : (
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                欢迎使用 <span className="text-primary">TheGuide</span> 工具箱
+                {t('欢迎使用')} <span className="text-primary">TheGuide</span> {t('工具箱')}
               </h1>
             </div>
           )}
@@ -550,12 +640,12 @@ export default function HomePage() {
 
           {/* Calendar */}
           <div className="lg:row-span-2">
-            <Calendar />
+            <Calendar lang={lang} />
           </div>
 
           {/* Weather */}
           <div className="lg:col-span-2">
-            <Weather />
+            <Weather lang={lang} />
           </div>
         </div>
 
@@ -564,22 +654,22 @@ export default function HomePage() {
           <QuickAccessCard
             href="/guide"
             icon={Compass}
-            title="网站导航"
-            description="精选 100+ 优质网站，快速访问"
+            title={t('网站导航')}
+            description={t('精选 100+ 优质网站，快速访问')}
             gradient="bg-primary"
           />
           <QuickAccessCard
             href="/tools"
             icon={Wrench}
-            title="实用工具"
-            description="30+ 在线工具，提升效率"
+            title={t('实用工具')}
+            description={t('30+ 在线工具，提升效率')}
             gradient="bg-accent"
           />
           <QuickAccessCard
             href="/favorites"
             icon={Heart}
-            title="我的收藏"
-            description="快速访问收藏的工具和网站"
+            title={t('我的收藏')}
+            description={t('快速访问收藏的工具和网站')}
             gradient="bg-red-500"
           />
         </div>

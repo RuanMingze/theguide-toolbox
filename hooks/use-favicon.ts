@@ -130,11 +130,18 @@ export function useFavicon({ url, name }: UseFaviconProps) {
     // 缓存成功的 favicon
     try {
       const img = e.currentTarget
-      const response = await fetch(img.src)
-      const blob = await response.blob()
-      await cacheFavicon(url, blob)
+      // 检查是否是跨域图片
+      if (img.complete && img.naturalWidth !== 0) {
+        // 尝试获取图片，如果失败则跳过缓存
+        const response = await fetch(img.src, { mode: 'cors' })
+        if (response.ok) {
+          const blob = await response.blob()
+          await cacheFavicon(url, blob)
+        }
+      }
     } catch (error) {
-      console.error('Failed to cache favicon:', error)
+      // 跨域或其他错误时，静默失败，不影响使用
+      console.debug('Skipping favicon cache (likely CORS):', url)
     }
   }, [url, hasLoadedFromCache])
 
@@ -142,7 +149,7 @@ export function useFavicon({ url, name }: UseFaviconProps) {
   const showFallback = errorCount >= faviconPaths.length
 
   return {
-    src: showFallback ? '' : (currentSrc || ''),
+    src: showFallback ? null : (currentSrc || null),
     error: showFallback,
     onError: handleError,
     onLoad: handleLoad,

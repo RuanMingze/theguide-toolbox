@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Image, Eye, EyeOff, X, Upload, Link as LinkIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslation } from '@/hooks/use-translation'
 
 const wallpapers = [
   {
@@ -39,6 +40,7 @@ const wallpapers = [
 ]
 
 export default function SettingsPage() {
+  const { t, lang } = useTranslation()
   const [wallpaper, setWallpaper] = useState<string>('')
   const [glassEffect, setGlassEffect] = useState<boolean>(true)
   const [glassColor, setGlassColor] = useState<string>('255, 255, 255')
@@ -142,8 +144,8 @@ export default function SettingsPage() {
     if (file) {
       if (!file.type.startsWith('image/')) {
         toast({
-          title: '上传失败',
-          description: '请上传图片文件',
+          title: lang === 'en' ? 'Upload Failed' : '上传失败',
+          description: lang === 'en' ? 'Please upload an image file' : '请上传图片文件',
           variant: 'destructive',
         })
         return
@@ -176,9 +178,9 @@ export default function SettingsPage() {
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">设置</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t("设置")}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            自定义您的个性化设置
+            {t("自定义您的个性化设置")}
           </p>
         </div>
 
@@ -187,12 +189,12 @@ export default function SettingsPage() {
           <div className="rounded-xl border border-border bg-card p-6">
             <div className="mb-4 flex items-center gap-3">
               <Image className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">壁纸</h2>
+              <h2 className="text-lg font-semibold text-foreground">{t("壁纸设置")}</h2>
             </div>
             
             {/* 预设壁纸 */}
             <div className="mb-6">
-              <h3 className="mb-3 text-sm font-medium text-foreground">预设壁纸</h3>
+              <h3 className="mb-3 text-sm font-medium text-foreground">{lang === 'en' ? 'Preset Wallpapers' : '预设壁纸'}</h3>
               <div className="grid grid-cols-3 gap-4 sm:grid-cols-5">
                 {wallpapers.map((wp) => (
                   <button
@@ -232,7 +234,7 @@ export default function SettingsPage() {
 
             {/* 自定义壁纸 */}
             <div className="border-t border-border pt-6">
-              <h3 className="mb-3 text-sm font-medium text-foreground">自定义壁纸</h3>
+              <h3 className="mb-3 text-sm font-medium text-foreground">{lang === 'en' ? 'Custom Wallpaper' : '自定义壁纸'}</h3>
               
               {/* 切换按钮 */}
               <div className="mb-4 flex gap-2">
@@ -249,7 +251,7 @@ export default function SettingsPage() {
                 )}
               >
                 <Upload className="h-4 w-4" />
-                上传图片
+                {t("上传图片")}
               </button>
               <button
                 onClick={() => {
@@ -264,7 +266,7 @@ export default function SettingsPage() {
                 )}
               >
                 <LinkIcon className="h-4 w-4" />
-                图片链接
+                {lang === 'en' ? 'Image URL' : '图片链接'}
               </button>
               </div>
 
@@ -275,14 +277,14 @@ export default function SettingsPage() {
                     type="text"
                     value={customImageUrl}
                     onChange={(e) => setCustomImageUrl(e.target.value)}
-                    placeholder="输入图片 URL，例如：https://example.com/wallpaper.jpg"
+                    placeholder={lang === 'en' ? 'Enter image URL, e.g.: https://example.com/wallpaper.jpg' : '输入图片 URL，例如：https://example.com/wallpaper.jpg'}
                     className="flex-1 rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                   <button
                     onClick={handleImageUrlSubmit}
                     className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                   >
-                    应用
+                    {t("提交")}
                   </button>
                 </div>
               ) : (
@@ -308,8 +310,12 @@ export default function SettingsPage() {
                   >
                     <Upload className="h-6 w-6 text-muted-foreground" />
                     <div className="text-center">
-                      <p className="text-sm font-medium text-foreground">点击上传图片</p>
-                      <p className="text-xs text-muted-foreground">支持 JPG、PNG、GIF 等格式</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {lang === 'en' ? 'Click to upload image' : '点击上传图片'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {lang === 'en' ? 'Supports JPG, PNG, GIF, etc.' : '支持 JPG、PNG、GIF 等格式'}
+                      </p>
                     </div>
                   </button>
                 </div>
@@ -319,7 +325,9 @@ export default function SettingsPage() {
               {customImageUrl && (
                 <div className="mt-4">
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">当前自定义壁纸</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {lang === 'en' ? 'Current Custom Wallpaper' : '当前自定义壁纸'}
+                    </span>
                     <button
                       onClick={() => {
                         setCustomImageUrl('')
@@ -327,7 +335,7 @@ export default function SettingsPage() {
                       }}
                       className="text-sm text-destructive hover:text-destructive-foreground"
                     >
-                      清除
+                      {lang === 'en' ? 'Clear' : '清除'}
                     </button>
                   </div>
                   <div
@@ -344,7 +352,7 @@ export default function SettingsPage() {
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Eye className="h-5 w-5 text-primary" />
-                <h2 className="text-lg font-semibold text-foreground">毛玻璃特效</h2>
+                <h2 className="text-lg font-semibold text-foreground">{t("毛玻璃效果")}</h2>
               </div>
               <button
                 onClick={() => {
@@ -370,7 +378,7 @@ export default function SettingsPage() {
                 {/* 颜色选择 */}
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
-                    毛玻璃颜色
+                    {t("毛玻璃颜色")}
                   </label>
                   <div className="grid grid-cols-3 gap-3">
                     <button
@@ -418,7 +426,7 @@ export default function SettingsPage() {
                 {/* 透明度滑块 */}
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
-                    透明度：{glassOpacity}%
+                    {t("毛玻璃透明度")}: {glassOpacity}%
                   </label>
                   <input
                     type="range"
@@ -440,7 +448,7 @@ export default function SettingsPage() {
                 {/* 预览 */}
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
-                    预览
+                    {lang === 'en' ? 'Preview' : '预览'}
                   </label>
                   <div
                     className="h-24 rounded-lg border border-border"
@@ -460,11 +468,11 @@ export default function SettingsPage() {
               onClick={handleReset}
               className="rounded-lg border border-border bg-card px-6 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
             >
-              重置为默认设置
+              {lang === 'en' ? 'Reset to Default' : '重置为默认设置'}
             </button>
             {hasUnsavedChanges && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>设置已自动保存</span>
+                <span>{lang === 'en' ? 'Settings auto-saved' : '设置已自动保存'}</span>
               </div>
             )}
           </div>

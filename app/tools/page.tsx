@@ -4,6 +4,7 @@ import { useState, useCallback } from "react"
 import { Navbar } from "@/components/navbar"
 import { useFavorites } from "@/hooks/use-favorites"
 import { useSettings } from "@/hooks/use-settings"
+import { useTranslation } from "@/hooks/use-translation"
 import { 
   Search, 
   FileText, 
@@ -103,8 +104,108 @@ const tools: Tool[] = [
 
 const categories = Array.from(new Set(tools.map(tool => tool.category)))
 
+// 分类翻译
+const categoryTranslations: Record<string, string> = {
+  "文本工具": "Text Tools",
+  "编码转换": "Encoding & Conversion",
+  "图片工具": "Image Tools",
+  "格式转换": "File Converter",
+  "生成器": "Generators",
+  "计算工具": "Calculators",
+  "颜色工具": "Color Tools",
+}
+
+// 工具名称翻译
+const toolNameTranslations: Record<string, string> = {
+  "字数统计": "Character Counter",
+  "大小写转换": "Case Converter",
+  "文本对比": "Text Diff",
+  "批量替换": "Batch Replace",
+  "文本反转": "Text Reverser",
+  "去除重复行": "Remove Duplicate Lines",
+  "文本排序": "Text Sorter",
+  "Base64 编解码": "Base64 Encoder/Decoder",
+  "URL 编解码": "URL Encoder/Decoder",
+  "Unicode 转换": "Unicode Converter",
+  "HTML 实体转换": "HTML Entity Converter",
+  "JSON 格式化": "JSON Formatter",
+  "进制转换": "Base Converter",
+  "ASCII 转换": "ASCII Converter",
+  "图片压缩": "Image Compressor",
+  "图片调整": "Image Resizer",
+  "图片旋转": "Image Rotator",
+  "图片滤镜": "Image Filters",
+  "黑白转换": "Grayscale Converter",
+  "背景透明": "Background Remover",
+  "图片转 Base64": "Image to Base64",
+  "文件格式转换": "File Converter",
+  "密码生成器": "Password Generator",
+  "UUID 生成器": "UUID Generator",
+  "二维码生成": "QR Code Generator",
+  "Lorem 生成器": "Lorem Ipsum Generator",
+  "随机颜色": "Random Color",
+  "科学计算器": "Scientific Calculator",
+  "单位换算": "Unit Converter",
+  "百分比计算": "Percentage Calculator",
+  "日期计算": "Date Calculator",
+  "时间戳转换": "Timestamp Converter",
+  "BMI 计算器": "BMI Calculator",
+  "取色器": "Color Picker",
+  "颜色转换": "Color Converter",
+  "渐变生成器": "Gradient Generator",
+}
+
+// 工具描述翻译
+const toolDescriptionTranslations: Record<string, string> = {
+  "统计文本字数、字符数、行数": "Count characters, words, and lines in text",
+  "转换文本大小写格式": "Convert text case format",
+  "比较两段文本的差异": "Compare differences between two texts",
+  "批量查找替换文本内容": "Batch find and replace text content",
+  "反转文本字符顺序": "Reverse text character order",
+  "删除重复的文本行": "Remove duplicate text lines",
+  "按字母或数字排序文本行": "Sort text lines alphabetically or numerically",
+  "文本与 Base64 互转": "Convert text to/from Base64",
+  "URL 编码与解码": "URL encoding and decoding",
+  "Unicode 编码转换": "Unicode encoding conversion",
+  "HTML 特殊字符转义": "HTML special character escaping",
+  "格式化和校验 JSON": "Format and validate JSON",
+  "二进制、八进制、十进制、十六进制互转": "Convert between binary, octal, decimal, hexadecimal",
+  "字符与 ASCII 码互转": "Convert characters to/from ASCII codes",
+  "压缩图片文件大小": "Compress image file size",
+  "调整图片尺寸大小": "Resize image dimensions",
+  "旋转和翻转图片": "Rotate and flip images",
+  "添加滤镜效果": "Add filter effects",
+  "彩色图片转黑白": "Convert color images to grayscale",
+  "移除图片背景使之透明": "Remove image background to make it transparent",
+  "图片转换为 Base64 编码": "Convert image to Base64 encoding",
+  "转换文件格式": "Convert file formats",
+  "生成安全随机密码": "Generate secure random passwords",
+  "生成唯一识别码 UUID": "Generate unique identifier UUID",
+  "生成自定义二维码": "Generate custom QR codes",
+  "生成占位文本": "Generate placeholder text",
+  "生成随机颜色代码": "Generate random color codes",
+  "支持高级数学运算": "Support advanced mathematical operations",
+  "长度、重量、温度等单位转换": "Convert units like length, weight, temperature",
+  "计算百分比和比例": "Calculate percentage and ratios",
+  "计算日期差和日期加减": "Calculate date difference and date arithmetic",
+  "Unix 时间戳与日期互转": "Convert Unix timestamp to/from date",
+  "计算身体质量指数": "Calculate Body Mass Index",
+  "选择和提取颜色": "Select and extract colors",
+  "HEX、RGB、HSL 互转": "Convert between HEX, RGB, HSL",
+  "创建 CSS 渐变效果": "Create CSS gradient effects",
+}
+
 // Tool Modal Component
 function ToolModal({ tool, onClose }: { tool: Tool; onClose: () => void }) {
+  const { lang } = useTranslation()
+  
+  const displayName = lang === 'en' && toolNameTranslations[tool.name] 
+    ? toolNameTranslations[tool.name] 
+    : tool.name
+  const displayDescription = lang === 'en' && toolDescriptionTranslations[tool.description]
+    ? toolDescriptionTranslations[tool.description]
+    : tool.description
+  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-auto rounded-2xl border border-border bg-card shadow-xl">
@@ -114,8 +215,8 @@ function ToolModal({ tool, onClose }: { tool: Tool; onClose: () => void }) {
               <tool.icon className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-foreground">{tool.name}</h2>
-              <p className="text-sm text-muted-foreground">{tool.description}</p>
+              <h2 className="text-lg font-semibold text-foreground">{displayName}</h2>
+              <p className="text-sm text-muted-foreground">{displayDescription}</p>
             </div>
           </div>
           <button
@@ -209,6 +310,7 @@ function ToolContent({ toolId }: { toolId: string }) {
 
 // Utility Components
 function CopyButton({ text }: { text: string }) {
+  const { lang } = useTranslation()
   const [copied, setCopied] = useState(false)
   
   const copy = () => {
@@ -223,13 +325,14 @@ function CopyButton({ text }: { text: string }) {
       className="flex items-center gap-1 rounded-lg bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/80"
     >
       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-      {copied ? "已复制" : "复制"}
+      {copied ? (lang === 'en' ? 'Copied' : '已复制') : (lang === 'en' ? 'Copy' : '复制')}
     </button>
   )
 }
 
 // Text Counter Tool
 function TextCounterTool() {
+  const { lang } = useTranslation()
   const [text, setText] = useState("")
   
   const stats = {
@@ -240,22 +343,30 @@ function TextCounterTool() {
     paragraphs: text.trim() ? text.split(/\n\n+/).filter(p => p.trim()).length : 0,
   }
   
+  const statLabels = lang === 'en' ? [
+    { label: "Characters", value: stats.chars },
+    { label: "No Spaces", value: stats.charsNoSpace },
+    { label: "Words", value: stats.words },
+    { label: "Lines", value: stats.lines },
+    { label: "Paragraphs", value: stats.paragraphs },
+  ] : [
+    { label: "字符数", value: stats.chars },
+    { label: "不含空格", value: stats.charsNoSpace },
+    { label: "单词数", value: stats.words },
+    { label: "行数", value: stats.lines },
+    { label: "段落数", value: stats.paragraphs },
+  ]
+  
   return (
     <div className="space-y-4">
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="在此输入或粘贴文本..."
+        placeholder={lang === 'en' ? 'Enter or paste text here...' : '在此输入或粘贴文本...'}
         className="h-40 w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
       />
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-        {[
-          { label: "字符数", value: stats.chars },
-          { label: "不含空格", value: stats.charsNoSpace },
-          { label: "单词数", value: stats.words },
-          { label: "行数", value: stats.lines },
-          { label: "段落数", value: stats.paragraphs },
-        ].map((stat) => (
+        {statLabels.map((stat) => (
           <div key={stat.label} className="rounded-lg bg-secondary p-3 text-center">
             <div className="text-2xl font-bold text-foreground">{stat.value}</div>
             <div className="text-xs text-muted-foreground">{stat.label}</div>
@@ -268,9 +379,15 @@ function TextCounterTool() {
 
 // Case Converter Tool
 function CaseConverterTool() {
+  const { lang } = useTranslation()
   const [text, setText] = useState("")
   
-  const conversions = [
+  const conversions = lang === 'en' ? [
+    { label: "UPPERCASE", value: text.toUpperCase() },
+    { label: "lowercase", value: text.toLowerCase() },
+    { label: "Title Case", value: text.replace(/\b\w/g, c => c.toUpperCase()) },
+    { label: "Sentence case", value: text.charAt(0).toUpperCase() + text.slice(1).toLowerCase() },
+  ] : [
     { label: "大写", value: text.toUpperCase() },
     { label: "小写", value: text.toLowerCase() },
     { label: "首字母大写", value: text.replace(/\b\w/g, c => c.toUpperCase()) },
@@ -282,7 +399,7 @@ function CaseConverterTool() {
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="输入要转换的文本..."
+        placeholder={lang === 'en' ? 'Enter text to convert...' : '输入要转换的文本...'}
         className="h-32 w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
       />
       <div className="space-y-3">
@@ -300,6 +417,7 @@ function CaseConverterTool() {
 
 // Base64 Tool
 function Base64Tool() {
+  const { lang } = useTranslation()
   const [input, setInput] = useState("")
   const [output, setOutput] = useState("")
   const [mode, setMode] = useState<"encode" | "decode">("encode")
@@ -312,7 +430,7 @@ function Base64Tool() {
         setOutput(decodeURIComponent(escape(atob(input))))
       }
     } catch {
-      setOutput("转换错误：输入格式不正确")
+      setOutput(lang === 'en' ? 'Conversion error: Invalid input format' : '转换错误：输入格式不正确')
     }
   }
   
@@ -325,7 +443,7 @@ function Base64Tool() {
             mode === "encode" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
           }`}
         >
-          编码
+          {lang === 'en' ? 'Encode' : '编码'}
         </button>
         <button
           onClick={() => setMode("decode")}
@@ -333,26 +451,29 @@ function Base64Tool() {
             mode === "decode" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
           }`}
         >
-          解码
+          {lang === 'en' ? 'Decode' : '解码'}
         </button>
       </div>
       <textarea
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder={mode === "encode" ? "输入要编码的文本..." : "输入要解码的Base64..."}
+        placeholder={lang === 'en' 
+          ? (mode === "encode" ? "Enter text to encode..." : "Enter Base64 to decode...")
+          : (mode === "encode" ? "输入要编码的文本..." : "输入要解码的 Base64...")
+        }
         className="h-32 w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
       />
       <button
         onClick={convert}
         className="w-full rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90"
       >
-        转换
+        {lang === 'en' ? 'Convert' : '转换'}
       </button>
       <div className="flex items-start gap-3">
         <textarea
           value={output}
           readOnly
-          placeholder="结果将显示在这里..."
+          placeholder={lang === 'en' ? 'Result will be shown here...' : '结果将显示在这里...'}
           className="h-32 flex-1 rounded-lg border border-border bg-secondary p-4 text-foreground placeholder:text-muted-foreground"
         />
         {output && <CopyButton text={output} />}
@@ -363,6 +484,7 @@ function Base64Tool() {
 
 // URL Encode Tool
 function UrlEncodeTool() {
+  const { lang } = useTranslation()
   const [input, setInput] = useState("")
   const [output, setOutput] = useState("")
   const [mode, setMode] = useState<"encode" | "decode">("encode")
@@ -375,7 +497,7 @@ function UrlEncodeTool() {
         setOutput(decodeURIComponent(input))
       }
     } catch {
-      setOutput("转换错误：输入格式不正确")
+      setOutput(lang === 'en' ? 'Conversion error: Invalid input format' : '转换错误：输入格式不正确')
     }
   }
   
@@ -388,7 +510,7 @@ function UrlEncodeTool() {
             mode === "encode" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
           }`}
         >
-          编码
+          {lang === 'en' ? 'Encode' : '编码'}
         </button>
         <button
           onClick={() => setMode("decode")}
@@ -396,26 +518,29 @@ function UrlEncodeTool() {
             mode === "decode" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
           }`}
         >
-          解码
+          {lang === 'en' ? 'Decode' : '解码'}
         </button>
       </div>
       <textarea
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder={mode === "encode" ? "输入要编码的URL..." : "输入要解码的URL..."}
+        placeholder={lang === 'en' 
+          ? (mode === "encode" ? "Enter URL to encode..." : "Enter URL to decode...")
+          : (mode === "encode" ? "输入要编码的 URL..." : "输入要解码的 URL...")
+        }
         className="h-32 w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
       />
       <button
         onClick={convert}
         className="w-full rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90"
       >
-        转换
+        {lang === 'en' ? 'Convert' : '转换'}
       </button>
       <div className="flex items-start gap-3">
         <textarea
           value={output}
           readOnly
-          placeholder="结果将显示在这里..."
+          placeholder={lang === 'en' ? 'Result will be shown here...' : '结果将显示在这里...'}
           className="h-32 flex-1 rounded-lg border border-border bg-secondary p-4 text-foreground placeholder:text-muted-foreground"
         />
         {output && <CopyButton text={output} />}
@@ -426,6 +551,7 @@ function UrlEncodeTool() {
 
 // JSON Format Tool
 function JsonFormatTool() {
+  const { lang } = useTranslation()
   const [input, setInput] = useState("")
   const [output, setOutput] = useState("")
   const [error, setError] = useState("")
@@ -436,7 +562,7 @@ function JsonFormatTool() {
       setOutput(JSON.stringify(parsed, null, 2))
       setError("")
     } catch (e) {
-      setError("JSON格式错误：" + (e as Error).message)
+      setError((lang === 'en' ? 'JSON format error: ' : 'JSON 格式错误：') + (e as Error).message)
       setOutput("")
     }
   }
@@ -447,7 +573,7 @@ function JsonFormatTool() {
       setOutput(JSON.stringify(parsed))
       setError("")
     } catch (e) {
-      setError("JSON格式错误：" + (e as Error).message)
+      setError((lang === 'en' ? 'JSON format error: ' : 'JSON 格式错误：') + (e as Error).message)
       setOutput("")
     }
   }
@@ -457,7 +583,7 @@ function JsonFormatTool() {
       <textarea
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="粘贴JSON数据..."
+        placeholder={lang === 'en' ? 'Paste JSON data here...' : '粘贴 JSON 数据...'}
         className="h-40 w-full rounded-lg border border-border bg-background p-4 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
       />
       <div className="flex gap-2">
@@ -465,13 +591,13 @@ function JsonFormatTool() {
           onClick={format}
           className="flex-1 rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90"
         >
-          格式化
+          {lang === 'en' ? 'Format' : '格式化'}
         </button>
         <button
           onClick={minify}
           className="flex-1 rounded-lg bg-secondary px-4 py-2 font-medium text-secondary-foreground hover:bg-secondary/80"
         >
-          压缩
+          {lang === 'en' ? 'Minify' : '压缩'}
         </button>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
@@ -479,7 +605,7 @@ function JsonFormatTool() {
         <textarea
           value={output}
           readOnly
-          placeholder="结果将显示在这里..."
+          placeholder={lang === 'en' ? 'Result will be shown here...' : '结果将显示在这里...'}
           className="h-40 flex-1 rounded-lg border border-border bg-secondary p-4 font-mono text-sm text-foreground placeholder:text-muted-foreground"
         />
         {output && <CopyButton text={output} />}
@@ -490,6 +616,7 @@ function JsonFormatTool() {
 
 // Password Generator Tool
 function PasswordGeneratorTool() {
+  const { lang } = useTranslation()
   const [length, setLength] = useState(16)
   const [options, setOptions] = useState({
     uppercase: true,
@@ -507,7 +634,7 @@ function PasswordGeneratorTool() {
     if (options.symbols) chars += "!@#$%^&*()_+-=[]{}|;:,.<>?"
     
     if (!chars) {
-      setPassword("请至少选择一种字符类型")
+      setPassword(lang === 'en' ? 'Please select at least one character type' : '请至少选择一种字符类型')
       return
     }
     
@@ -516,7 +643,7 @@ function PasswordGeneratorTool() {
       result += chars.charAt(Math.floor(Math.random() * chars.length))
     }
     setPassword(result)
-  }, [length, options])
+  }, [length, options, lang])
   
   return (
     <div className="space-y-4">
@@ -567,6 +694,7 @@ function PasswordGeneratorTool() {
 
 // UUID Generator Tool
 function UuidGeneratorTool() {
+  const { lang } = useTranslation()
   const [uuids, setUuids] = useState<string[]>([])
   const [count, setCount] = useState(1)
   
@@ -584,7 +712,9 @@ function UuidGeneratorTool() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
-        <label className="text-sm text-muted-foreground">生成数量:</label>
+        <label className="text-sm text-muted-foreground">
+          {lang === 'en' ? 'Count:' : '生成数量:'}
+        </label>
         <input
           type="number"
           min="1"
@@ -598,7 +728,7 @@ function UuidGeneratorTool() {
         onClick={generate}
         className="w-full rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90"
       >
-        生成UUID
+        {lang === 'en' ? 'Generate UUID' : '生成 UUID'}
       </button>
       {uuids.length > 0 && (
         <div className="space-y-2">
@@ -617,6 +747,7 @@ function UuidGeneratorTool() {
 
 // QR Code Generator Tool
 function QrCodeGeneratorTool() {
+  const { lang } = useTranslation()
   const [text, setText] = useState("")
   const [qrUrl, setQrUrl] = useState("")
   
@@ -631,14 +762,14 @@ function QrCodeGeneratorTool() {
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="输入要生成二维码的文本或链接..."
+        placeholder={lang === 'en' ? 'Enter text or URL to generate QR code...' : '输入要生成二维码的文本或链接...'}
         className="h-24 w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
       />
       <button
         onClick={generate}
         className="w-full rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90"
       >
-        生成二维码
+        {lang === 'en' ? 'Generate QR Code' : '生成二维码'}
       </button>
       {qrUrl && (
         <div className="flex flex-col items-center gap-4">
@@ -649,7 +780,7 @@ function QrCodeGeneratorTool() {
             className="flex items-center gap-2 rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/80"
           >
             <Download className="h-4 w-4" />
-            下载二维码
+            {lang === 'en' ? 'Download QR Code' : '下载二维码'}
           </a>
         </div>
       )}
@@ -1000,6 +1131,7 @@ function UnitConverterTool() {
 
 // Percentage Tool
 function PercentageTool() {
+  const { lang } = useTranslation()
   const [a, setA] = useState("")
   const [b, setB] = useState("")
   
@@ -1037,28 +1169,34 @@ function PercentageTool() {
           type="number"
           value={a}
           onChange={(e) => setA(e.target.value)}
-          placeholder="数值A"
+          placeholder={lang === 'en' ? 'Value A' : '数值 A'}
           className="w-32 rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
         />
         <input
           type="number"
           value={b}
           onChange={(e) => setB(e.target.value)}
-          placeholder="数值B"
+          placeholder={lang === 'en' ? 'Value B' : '数值 B'}
           className="w-32 rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
         />
       </div>
       <div className="space-y-2 rounded-lg bg-secondary p-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">A 占 B 的百分比</span>
+          <span className="text-sm text-muted-foreground">
+            {lang === 'en' ? 'A as % of B' : 'A 占 B 的百分比'}
+          </span>
           <span className="font-medium text-foreground">{calc1()}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">A 的 B%</span>
+          <span className="text-sm text-muted-foreground">
+            {lang === 'en' ? 'A% of B' : 'A 的 B%'}
+          </span>
           <span className="font-medium text-foreground">{calc2()}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">A 相对 B 的增长率</span>
+          <span className="text-sm text-muted-foreground">
+            {lang === 'en' ? 'Growth rate of A relative to B' : 'A 相对 B 的增长率'}
+          </span>
           <span className="font-medium text-foreground">{calc3()}</span>
         </div>
       </div>
@@ -1207,6 +1345,7 @@ function HexConverterTool() {
 
 // Text Replace Tool
 function TextReplaceTool() {
+  const { lang } = useTranslation()
   const [text, setText] = useState("")
   const [find, setFind] = useState("")
   const [replace, setReplace] = useState("")
@@ -1221,7 +1360,7 @@ function TextReplaceTool() {
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="输入原始文本..."
+        placeholder={lang === 'en' ? 'Enter original text...' : '输入原始文本...'}
         className="h-24 w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
       />
       <div className="flex gap-3">
@@ -1229,14 +1368,14 @@ function TextReplaceTool() {
           type="text"
           value={find}
           onChange={(e) => setFind(e.target.value)}
-          placeholder="查找"
+          placeholder={lang === 'en' ? 'Find' : '查找'}
           className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
         />
         <input
           type="text"
           value={replace}
           onChange={(e) => setReplace(e.target.value)}
-          placeholder="替换为"
+          placeholder={lang === 'en' ? 'Replace with' : '替换为'}
           className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
         />
       </div>
@@ -1244,13 +1383,13 @@ function TextReplaceTool() {
         onClick={doReplace}
         className="w-full rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90"
       >
-        替换
+        {lang === 'en' ? 'Replace' : '替换'}
       </button>
       <div className="flex items-start gap-3">
         <textarea
           value={result}
           readOnly
-          placeholder="结果..."
+          placeholder={lang === 'en' ? 'Result...' : '结果...'}
           className="h-24 flex-1 rounded-lg border border-border bg-secondary p-4 text-foreground"
         />
         {result && <CopyButton text={result} />}
@@ -1261,6 +1400,7 @@ function TextReplaceTool() {
 
 // Text Reverse Tool
 function TextReverseTool() {
+  const { lang } = useTranslation()
   const [text, setText] = useState("")
   const result = text.split("").reverse().join("")
   
@@ -1269,14 +1409,14 @@ function TextReverseTool() {
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="输入要反转的文本..."
+        placeholder={lang === 'en' ? 'Enter text to reverse...' : '输入要反转的文本...'}
         className="h-32 w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
       />
       <div className="flex items-start gap-3">
         <textarea
           value={result}
           readOnly
-          placeholder="反转结果..."
+          placeholder={lang === 'en' ? 'Reversed result...' : '反转结果...'}
           className="h-32 flex-1 rounded-lg border border-border bg-secondary p-4 text-foreground"
         />
         {result && <CopyButton text={result} />}
@@ -1287,6 +1427,7 @@ function TextReverseTool() {
 
 // Text Dedupe Tool
 function TextDedupeTool() {
+  const { lang } = useTranslation()
   const [text, setText] = useState("")
   const result = Array.from(new Set(text.split("\n"))).join("\n")
   
@@ -1295,14 +1436,14 @@ function TextDedupeTool() {
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="每行一个内容..."
+        placeholder={lang === 'en' ? 'One item per line...' : '每行一个内容...'}
         className="h-32 w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
       />
       <div className="flex items-start gap-3">
         <textarea
           value={result}
           readOnly
-          placeholder="去重结果..."
+          placeholder={lang === 'en' ? 'Deduplicated result...' : '去重结果...'}
           className="h-32 flex-1 rounded-lg border border-border bg-secondary p-4 text-foreground"
         />
         {result && <CopyButton text={result} />}
@@ -1313,6 +1454,7 @@ function TextDedupeTool() {
 
 // Text Sort Tool
 function TextSortTool() {
+  const { lang } = useTranslation()
   const [text, setText] = useState("")
   const [order, setOrder] = useState<"asc" | "desc">("asc")
   const result = text.split("\n").filter(Boolean).sort((a, b) => 
@@ -1324,7 +1466,7 @@ function TextSortTool() {
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="每行一个内容..."
+        placeholder={lang === 'en' ? 'One item per line...' : '每行一个内容...'}
         className="h-32 w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
       />
       <div className="flex gap-2">
@@ -1334,7 +1476,7 @@ function TextSortTool() {
             order === "asc" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
           }`}
         >
-          升序
+          {lang === 'en' ? 'Ascending' : '升序'}
         </button>
         <button
           onClick={() => setOrder("desc")}
@@ -1342,14 +1484,14 @@ function TextSortTool() {
             order === "desc" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
           }`}
         >
-          降序
+          {lang === 'en' ? 'Descending' : '降序'}
         </button>
       </div>
       <div className="flex items-start gap-3">
         <textarea
           value={result}
           readOnly
-          placeholder="排序结果..."
+          placeholder={lang === 'en' ? 'Sorted result...' : '排序结果...'}
           className="h-32 flex-1 rounded-lg border border-border bg-secondary p-4 text-foreground"
         />
         {result && <CopyButton text={result} />}
@@ -1639,6 +1781,7 @@ function GradientGeneratorTool() {
 
 // Date Calc Tool
 function DateCalcTool() {
+  const { lang } = useTranslation()
   const [date1, setDate1] = useState(new Date().toISOString().split("T")[0])
   const [date2, setDate2] = useState(new Date().toISOString().split("T")[0])
   
@@ -1654,7 +1797,9 @@ function DateCalcTool() {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <label className="mb-1 block text-sm text-muted-foreground">开始日期</label>
+          <label className="mb-1 block text-sm text-muted-foreground">
+            {lang === 'en' ? 'Start Date' : '开始日期'}
+          </label>
           <input
             type="date"
             value={date1}
@@ -1663,7 +1808,9 @@ function DateCalcTool() {
           />
         </div>
         <div className="flex-1">
-          <label className="mb-1 block text-sm text-muted-foreground">结束日期</label>
+          <label className="mb-1 block text-sm text-muted-foreground">
+            {lang === 'en' ? 'End Date' : '结束日期'}
+          </label>
           <input
             type="date"
             value={date2}
@@ -1674,7 +1821,9 @@ function DateCalcTool() {
       </div>
       <div className="rounded-lg bg-secondary p-4 text-center">
         <div className="text-3xl font-bold text-foreground">{diff()}</div>
-        <div className="text-sm text-muted-foreground">天</div>
+        <div className="text-sm text-muted-foreground">
+          {lang === 'en' ? 'days' : '天'}
+        </div>
       </div>
     </div>
   )
@@ -2166,6 +2315,7 @@ function PlaceholderTool() {
 
 // Main Page Component
 export default function ToolsPage() {
+  const { t, lang } = useTranslation()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null)
@@ -2197,10 +2347,10 @@ export default function ToolsPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            实用工具
+            {t("实用工具")}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            {tools.length}+ 在线工具，提升您的工作效率
+            {lang === 'en' ? `${tools.length}+ online tools to improve your work efficiency` : `${tools.length}+ 在线工具，提升您的工作效率`}
           </p>
         </div>
 
@@ -2210,7 +2360,7 @@ export default function ToolsPage() {
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder="搜索工具..."
+              placeholder={lang === 'en' ? 'Search tools...' : '搜索工具...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-xl border border-border bg-card px-10 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -2225,7 +2375,7 @@ export default function ToolsPage() {
                   : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
               }`}
             >
-              全部
+              {lang === 'en' ? 'All' : '全部'}
             </button>
             {categories.map((category) => (
               <button
@@ -2237,7 +2387,7 @@ export default function ToolsPage() {
                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                 }`}
               >
-                {category}
+                {lang === 'en' && categoryTranslations[category] ? categoryTranslations[category] : category}
               </button>
             ))}
           </div>
@@ -2248,7 +2398,7 @@ export default function ToolsPage() {
           {Object.entries(groupedTools).map(([category, categoryTools]) => (
             <section key={category}>
               <h2 className="mb-4 text-xl font-semibold text-foreground">
-                {category}
+                {lang === 'en' && categoryTranslations[category] ? categoryTranslations[category] : category}
                 <span className="ml-2 text-sm font-normal text-muted-foreground">
                   ({categoryTools.length})
                 </span>
@@ -2257,6 +2407,12 @@ export default function ToolsPage() {
                 {categoryTools.map((tool) => {
                   const Icon = tool.icon
                   const isFav = isFavorite(`tool-${tool.id}`)
+                  const displayToolName = lang === 'en' && toolNameTranslations[tool.name] 
+                    ? toolNameTranslations[tool.name] 
+                    : tool.name
+                  const displayToolDesc = lang === 'en' && toolDescriptionTranslations[tool.description]
+                    ? toolDescriptionTranslations[tool.description]
+                    : tool.description
                   return (
                     <div key={tool.id} className="relative group">
                       <button
@@ -2268,10 +2424,10 @@ export default function ToolsPage() {
                         </div>
                         <div className="flex-1">
                           <h3 className="font-medium text-foreground group-hover:text-primary">
-                            {tool.name}
+                            {displayToolName}
                           </h3>
                           <p className="text-xs text-muted-foreground line-clamp-2">
-                            {tool.description}
+                            {displayToolDesc}
                           </p>
                         </div>
                       </button>
@@ -2307,7 +2463,7 @@ export default function ToolsPage() {
 
         {filteredTools.length === 0 && (
           <div className="py-12 text-center">
-            <p className="text-muted-foreground">未找到匹配的工具</p>
+            <p className="text-muted-foreground">{lang === 'en' ? 'No matching tools found' : '未找到匹配的工具'}</p>
           </div>
         )}
       </main>

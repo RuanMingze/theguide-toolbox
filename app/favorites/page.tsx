@@ -5,6 +5,7 @@ import { Navbar } from "@/components/navbar"
 import { useFavorites } from "@/hooks/use-favorites"
 import { useFavicon, getInitials, getGradientColor } from "@/hooks/use-favicon"
 import { useSettings } from "@/hooks/use-settings"
+import { useTranslation } from "@/hooks/use-translation"
 import { Heart, ExternalLink, Trash2, Wrench, Compass, X } from "lucide-react"
 import Link from "next/link"
 
@@ -37,7 +38,7 @@ function WebsiteCard({ fav, onRemove }: WebsiteCardProps) {
         className="flex flex-col rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md"
       >
         <div className="mb-3 flex items-start gap-3">
-          {faviconError ? (
+          {faviconError || !faviconSrc ? (
             <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded bg-gradient-to-br ${getGradientColor(fav.name)}`}>
               <span className="text-xs font-bold text-white">{getInitials(fav.name)}</span>
             </div>
@@ -45,6 +46,7 @@ function WebsiteCard({ fav, onRemove }: WebsiteCardProps) {
             <img
               src={faviconSrc}
               alt={fav.name}
+              crossOrigin="anonymous"
               className="h-8 w-8 rounded"
               onError={handleFaviconError}
               onLoad={handleFaviconLoad}
@@ -81,6 +83,7 @@ function WebsiteCard({ fav, onRemove }: WebsiteCardProps) {
 }
 
 export default function FavoritesPage() {
+  const { t, lang } = useTranslation()
   const { favorites, removeFavorite, isLoaded } = useFavorites()
   const [filter, setFilter] = useState<'all' | 'tool' | 'website'>('all')
   
@@ -110,7 +113,7 @@ export default function FavoritesPage() {
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="text-center text-muted-foreground">加载中...</div>
+          <div className="text-center text-muted-foreground">{lang === 'en' ? 'Loading...' : '加载中...'}</div>
         </main>
       </div>
     )
@@ -123,10 +126,10 @@ export default function FavoritesPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            我的收藏
+            {t("我的收藏")}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            收藏了 {favorites.length} 个工具和网站
+            {lang === 'en' ? `Saved ${favorites.length} tools and websites` : `收藏了 ${favorites.length} 个工具和网站`}
           </p>
         </div>
 
@@ -140,7 +143,7 @@ export default function FavoritesPage() {
                 : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
             }`}
           >
-            全部 ({favorites.length})
+            {lang === 'en' ? `All (${favorites.length})` : `全部 (${favorites.length})`}
           </button>
           <button
             onClick={() => setFilter('tool')}
@@ -150,7 +153,7 @@ export default function FavoritesPage() {
                 : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
             }`}
           >
-            工具 ({toolFavorites.length})
+            {lang === 'en' ? `Tools (${toolFavorites.length})` : `工具 (${toolFavorites.length})`}
           </button>
           <button
             onClick={() => setFilter('website')}
@@ -160,7 +163,7 @@ export default function FavoritesPage() {
                 : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
             }`}
           >
-            网站 ({websiteFavorites.length})
+            {lang === 'en' ? `Websites (${websiteFavorites.length})` : `网站 (${websiteFavorites.length})`}
           </button>
         </div>
 
@@ -168,22 +171,22 @@ export default function FavoritesPage() {
         {filteredFavorites.length === 0 ? (
           <div className="py-12 text-center">
             <Heart className="mx-auto mb-4 h-16 w-16 text-muted-foreground/20" />
-            <h3 className="text-lg font-medium text-foreground">暂无收藏</h3>
+            <h3 className="text-lg font-medium text-foreground">{lang === 'en' ? 'No favorites yet' : '暂无收藏'}</h3>
             <p className="mt-2 text-muted-foreground">
-              在工具箱或网站导航中点击爱心图标添加收藏
+              {lang === 'en' ? 'Click the heart icon in Tools or Guide to add favorites' : '在工具箱或网站导航中点击爱心图标添加收藏'}
             </p>
             <div className="mt-6 flex justify-center gap-4">
               <Link
                 href="/tools"
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
-                浏览工具
+                {lang === 'en' ? 'Browse Tools' : '浏览工具'}
               </Link>
               <Link
                 href="/guide"
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
-                浏览网站
+                {lang === 'en' ? 'Browse Websites' : '浏览网站'}
               </Link>
             </div>
           </div>
@@ -193,7 +196,7 @@ export default function FavoritesPage() {
               <section>
                 <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-foreground">
                   <Wrench className="h-5 w-5" />
-                  收藏的工具
+                  {lang === 'en' ? 'Saved Tools' : '收藏的工具'}
                   <span className="text-sm font-normal text-muted-foreground">
                     ({toolFavorites.length})
                   </span>

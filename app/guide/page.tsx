@@ -5,6 +5,7 @@ import { Navbar } from "@/components/navbar"
 import { useFavorites } from "@/hooks/use-favorites"
 import { useFavicon, getInitials, getGradientColor } from "@/hooks/use-favicon"
 import { useSettings } from "@/hooks/use-settings"
+import { useTranslation } from "@/hooks/use-translation"
 import { Search, ExternalLink, Heart } from "lucide-react"
 
 interface Site {
@@ -35,7 +36,7 @@ function SiteCard({ site, isFav, onToggleFavorite }: SiteCardProps) {
         className="flex flex-col rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md"
       >
         <div className="mb-3 flex items-start gap-3">
-          {faviconError ? (
+          {faviconError || !faviconSrc ? (
             <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded bg-gradient-to-br ${getGradientColor(site.name)}`}>
               <span className="text-xs font-bold text-white">{getInitials(site.name)}</span>
             </div>
@@ -43,6 +44,7 @@ function SiteCard({ site, isFav, onToggleFavorite }: SiteCardProps) {
             <img
               src={faviconSrc}
               alt={site.name}
+              crossOrigin="anonymous"
               className="h-8 w-8 rounded"
               onError={handleFaviconError}
               onLoad={handleFaviconLoad}
@@ -220,7 +222,47 @@ const sites: Site[] = [
 
 const categories = Array.from(new Set(sites.map(site => site.category)))
 
+// 分类翻译
+const categoryTranslations: Record<string, string> = {
+  "开发工具": "Development Tools",
+  "云服务": "Cloud Services",
+  "社交媒体": "Social Media",
+  "设计资源": "Design Resources",
+  "学习资源": "Learning Resources",
+  "新闻媒体": "News & Media",
+  "娱乐": "Entertainment",
+  "购物": "Shopping",
+  "搜索引擎": "Search Engines",
+  "音乐": "Music",
+  "视频": "Video",
+  "阅读": "Reading",
+  "博客": "Blogs",
+  "论坛": "Forums",
+  "文档": "Documentation",
+  "API": "APIs",
+  "数据分析": "Data Analytics",
+  "人工智能": "Artificial Intelligence",
+  "网络安全": "Cybersecurity",
+  "游戏": "Gaming",
+  "旅游": "Travel",
+  "美食": "Food",
+  "健康": "Health",
+  "运动": "Sports",
+  "财经": "Finance",
+  "科技": "Technology",
+  "时尚": "Fashion",
+  "摄影": "Photography",
+  "艺术": "Art",
+  "文化": "Culture",
+  "教育": "Education",
+  "科学": "Science",
+  "工具": "Tools",
+  "社区": "Community",
+  "其他": "Others",
+}
+
 export default function GuidePage() {
+  const { t, lang } = useTranslation()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const { isFavorite, toggleFavorite } = useFavorites()
@@ -251,10 +293,10 @@ export default function GuidePage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            网站导航
+            {t("网站导航")}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            精选 {sites.length}+ 优质网站，快速访问
+            {lang === 'en' ? `Curated ${sites.length}+ quality websites` : `精选 ${sites.length}+ 优质网站，快速访问`}
           </p>
         </div>
 
@@ -264,7 +306,7 @@ export default function GuidePage() {
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder="搜索网站..."
+              placeholder={lang === 'en' ? 'Search websites...' : '搜索网站...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-xl border border-border bg-card px-10 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -279,7 +321,7 @@ export default function GuidePage() {
                   : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
               }`}
             >
-              全部
+              {lang === 'en' ? 'All' : '全部'}
             </button>
             {categories.map((category) => (
               <button
@@ -291,7 +333,7 @@ export default function GuidePage() {
                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                 }`}
               >
-                {category}
+                {lang === 'en' && categoryTranslations[category] ? categoryTranslations[category] : category}
               </button>
             ))}
           </div>
@@ -302,7 +344,7 @@ export default function GuidePage() {
           {Object.entries(groupedSites).map(([category, categorySites]) => (
             <section key={category}>
               <h2 className="mb-4 text-xl font-semibold text-foreground">
-                {category}
+                {lang === 'en' && categoryTranslations[category] ? categoryTranslations[category] : category}
                 <span className="ml-2 text-sm font-normal text-muted-foreground">
                   ({categorySites.length})
                 </span>
@@ -331,7 +373,7 @@ export default function GuidePage() {
 
         {filteredSites.length === 0 && (
           <div className="py-12 text-center">
-            <p className="text-muted-foreground">未找到匹配的网站</p>
+            <p className="text-muted-foreground">{lang === 'en' ? 'No matching websites found' : '未找到匹配的网站'}</p>
           </div>
         )}
       </main>

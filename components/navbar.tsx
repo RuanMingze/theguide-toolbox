@@ -6,19 +6,21 @@ import { Home, Compass, Wrench, Menu, X, LogIn, LogOut, User, ChevronDown, Exter
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth-provider"
-
-const navItems = [
-  { href: "/", label: "首页", icon: Home },
-  { href: "/guide", label: "网站导航", icon: Compass },
-  { href: "/tools", label: "工具箱", icon: Wrench },
-  { href: "/favorites", label: "我的收藏", icon: Heart }
-]
+import { useTranslation } from "@/hooks/use-translation"
 
 export function Navbar() {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const { user, isAuthenticated, isLoading, login, logout } = useAuth()
+  const { t } = useTranslation()
+  
+  const navItems = [
+    { href: "/", label: t("首页"), icon: Home },
+    { href: "/guide", label: t("网站导航"), icon: Compass },
+    { href: "/tools", label: t("工具箱"), icon: Wrench },
+    { href: "/favorites", label: t("我的收藏"), icon: Heart }
+  ]
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl">
@@ -62,7 +64,7 @@ export function Navbar() {
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
-            title="设置"
+            title={t("设置")}
           >
             <Settings className="h-5 w-5" />
           </a>
@@ -118,7 +120,7 @@ export function Navbar() {
                         className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-accent"
                       >
                         <LogOut className="h-4 w-4" />
-                        退出登录
+                        {t("退出")}
                       </button>
                     </div>
                   </>
@@ -130,7 +132,7 @@ export function Navbar() {
                 className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 <LogIn className="h-4 w-4" />
-                登录
+                {t("登录")}
               </button>
             )
           )}

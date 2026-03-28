@@ -26,24 +26,36 @@ function initDB(): Promise<IDBDatabase> {
 export async function cacheFavicon(url: string, data: Blob): Promise<void> {
   try {
     const db = await initDB()
-    const transaction = db.transaction([STORE_NAME], 'readwrite')
-    const store = transaction.objectStore(STORE_NAME)
     
+    // 先转换数据，再创建事务，避免事务超时
     const arrayBuffer = await data.arrayBuffer()
     
-    store.put({
-      url,
-      data: arrayBuffer,
-      type: data.type,
-      timestamp: Date.now(),
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = db.transaction([STORE_NAME], 'readwrite')
+        const store = transaction.objectStore(STORE_NAME)
+        
+        const request = store.put({
+          url,
+          data: arrayBuffer,
+          type: data.type,
+          timestamp: Date.now(),
+        })
+        
+        request.onsuccess = () => {
+          db.close()
+          resolve()
+        }
+        
+        request.onerror = () => {
+          db.close()
+          reject(request.error)
+        }
+      } catch (error) {
+        db.close()
+        reject(error)
+      }
     })
-    
-    await new Promise((resolve, reject) => {
-      transaction.oncomplete = () => resolve(true)
-      transaction.onerror = () => reject(transaction.error)
-    })
-    
-    db.close()
   } catch (error) {
     console.error('Failed to cache favicon:', error)
   }
