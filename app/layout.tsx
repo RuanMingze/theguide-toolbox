@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import Script from 'next/script'
+import { AuthProvider } from '@/components/auth-provider'
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -27,16 +28,18 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className="dark">
       <body className={`${inter.variable} font-sans antialiased`}>
-        {children}
-        <Analytics />
-        <Script 
-          src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"
-          strategy="lazyOnload"
-        />
-        <Script 
-          src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
-          strategy="lazyOnload"
-        />
+        <AuthProvider>
+          {children}
+          <Analytics />
+          <Script 
+            src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"
+            strategy="lazyOnload"
+          />
+          <Script 
+            src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+            strategy="lazyOnload"
+          />
+        </AuthProvider>
       </body>
     </html>
   )

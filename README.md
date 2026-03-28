@@ -97,9 +97,25 @@ pnpm lint
 ```env
 # OpenWeather API Key (用于天气预报功能)
 OPENWEATHER_API_KEY=your_api_key_here
+
+# Ruanm OAuth (用于用户登录功能)
+RUANM_OAUTH_CLIENT_ID=your_client_id
+RUANM_OAUTH_CLIENT_SECRET=your_client_secret
+RUANM_OAUTH_REDIRECT_URI=https://your-domain.com/callback
+RUANM_OAUTH_BASE_URL=https://ruanmgjx.dpdns.org
 ```
 
 获取 API Key: [OpenWeather](https://openweathermap.org/api)
+
+### OAuth 配置说明
+
+1. 在 Ruanm 平台创建 OAuth 应用
+2. 设置回调地址为 `https://your-domain.com/callback`
+3. 将 Client ID 和 Client Secret 填入环境变量
+4. 用户登录后可以访问个性化功能
+
+### 温馨提醒
+实际生产环境已经配置好env了，无需手动配置。
 
 ## 📱 特点
 
@@ -108,6 +124,7 @@ OPENWEATHER_API_KEY=your_api_key_here
 - ✅ **快速响应** - 无需网络请求，即时处理
 - ✅ **免费部署** - 可部署到 Cloudflare Pages，零成本
 - ✅ **响应式设计** - 支持桌面和移动端
+- ✅ **用户登录** - 支持 Ruanm OAuth 2.0 登录
 
 ## 🔒 隐私说明
 

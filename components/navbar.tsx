@@ -2,9 +2,10 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Compass, Wrench, Menu, X } from "lucide-react"
+import { Home, Compass, Wrench, Menu, X, LogIn, LogOut, User } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/components/auth-provider"
 
 const navItems = [
   { href: "/", label: "首页", icon: Home },
@@ -15,6 +16,7 @@ const navItems = [
 export function Navbar() {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { user, isAuthenticated, isLoading, login, logout } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl">
@@ -45,6 +47,43 @@ export function Navbar() {
               </Link>
             )
           })}
+        </div>
+
+        {/* Desktop Auth Button */}
+        <div className="hidden md:flex">
+          {!isLoading && (
+            isAuthenticated ? (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2">
+                  {user?.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.name}
+                      className="h-6 w-6 rounded-full"
+                    />
+                  ) : (
+                    <User className="h-5 w-5 text-muted-foreground" />
+                  )}
+                  <span className="text-sm font-medium">{user?.name}</span>
+                </div>
+                <button
+                  onClick={logout}
+                  className="flex items-center gap-2 rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary/80"
+                >
+                  <LogOut className="h-4 w-4" />
+                  退出
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={login}
+                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                <LogIn className="h-4 w-4" />
+                登录
+              </button>
+            )
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -80,6 +119,52 @@ export function Navbar() {
                 </Link>
               )
             })}
+            
+            {/* Mobile Auth */}
+            {!isLoading && (
+              isAuthenticated ? (
+                <>
+                  <div className="mt-4 flex items-center gap-3 border-t border-border pt-4">
+                    {user?.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.name}
+                        className="h-10 w-10 rounded-full"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
+                        <User className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium">{user?.name}</p>
+                      <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      logout()
+                      setMobileMenuOpen(false)
+                    }}
+                    className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-destructive px-4 py-3 text-sm font-medium text-destructive-foreground"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    退出登录
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    login()
+                    setMobileMenuOpen(false)
+                  }}
+                  className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+                >
+                  <LogIn className="h-5 w-5" />
+                  登录
+                </button>
+              )
+            )}
           </div>
         </div>
       )}
