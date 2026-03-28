@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Image, Eye, EyeOff, X, Upload, Link as LinkIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useToast } from '@/hooks/use-toast'
 
 const wallpapers = [
   {
@@ -47,6 +48,7 @@ export default function SettingsPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [showRefreshTip, setShowRefreshTip] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     // 从 localStorage 加载设置
@@ -139,7 +141,11 @@ export default function SettingsPage() {
     const file = e.target.files?.[0]
     if (file) {
       if (!file.type.startsWith('image/')) {
-        alert('请上传图片文件')
+        toast({
+          title: '上传失败',
+          description: '请上传图片文件',
+          variant: 'destructive',
+        })
         return
       }
       
