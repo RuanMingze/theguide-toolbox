@@ -7,10 +7,18 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const code = searchParams.get('code')
+    const state = searchParams.get('state')
     const user_profile = searchParams.get('user_profile')
 
     if (!code) {
       return NextResponse.redirect(new URL('/?error=oauth_failed', request.url))
+    }
+
+    // 验证 CSRF state 参数
+    const savedState = request.cookies.get('oauth_state')?.value
+    if (!state || !savedState || state !== savedState) {
+      console.error('CSRF state mismatch')
+      return NextResponse.redirect(new URL('/?error=csrf_failed', request.url))
     }
 
     const clientSecret = process.env.RUANM_OAUTH_CLIENT_SECRET
@@ -67,6 +75,9 @@ export async function GET(request: NextRequest) {
         console.error('Failed to parse user profile:', e)
       }
     }
+
+    // 删除已使用的 state cookie
+    response.cookies.delete('oauth_state')
 
     return response
   } catch (error) {

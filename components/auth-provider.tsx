@@ -56,8 +56,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  function login() {
-    window.location.href = '/api/oauth/authorize'
+  async function login() {
+    try {
+      const response = await fetch('/api/oauth/authorize')
+      const data = await response.json()
+      
+      if (data.authUrl) {
+        window.location.href = data.authUrl
+      } else {
+        console.error('No authUrl in response')
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+    }
   }
 
   return (
