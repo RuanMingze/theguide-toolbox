@@ -117,3 +117,6 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }
+
+// 使用 Edge Runtime
+export const runtime = 'edge'
