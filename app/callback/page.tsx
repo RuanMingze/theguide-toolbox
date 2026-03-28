@@ -12,6 +12,7 @@ function OAuthCallbackContent() {
   useEffect(() => {
     const code = searchParams.get('code')
     const error = searchParams.get('error')
+    const user_profile = searchParams.get('user_profile')
 
     if (error) {
       setStatus('error')
@@ -21,7 +22,16 @@ function OAuthCallbackContent() {
       return
     }
 
-    if (code) {
+    if (code && user_profile) {
+      // 保存用户信息到本地存储
+      try {
+        const userProfile = JSON.parse(decodeURIComponent(user_profile))
+        localStorage.setItem('oauth_user', JSON.stringify(userProfile))
+        localStorage.setItem('oauth_logged_in', 'true')
+      } catch (e) {
+        console.error('Failed to parse user profile:', e)
+      }
+
       setStatus('success')
       setTimeout(() => {
         router.push('/')

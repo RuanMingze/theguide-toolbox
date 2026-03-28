@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Compass, Wrench, Menu, X, LogIn, LogOut, User } from "lucide-react"
+import { Home, Compass, Wrench, Menu, X, LogIn, LogOut, User, ChevronDown, ExternalLink } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth-provider"
@@ -16,6 +16,7 @@ const navItems = [
 export function Navbar() {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const { user, isAuthenticated, isLoading, login, logout } = useAuth()
 
   return (
@@ -53,8 +54,11 @@ export function Navbar() {
         <div className="hidden md:flex">
           {!isLoading && (
             isAuthenticated ? (
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2">
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 transition-colors hover:bg-secondary/80"
+                >
                   {user?.avatar_url ? (
                     <img
                       src={user.avatar_url}
@@ -65,14 +69,44 @@ export function Navbar() {
                     <User className="h-5 w-5 text-muted-foreground" />
                   )}
                   <span className="text-sm font-medium">{user?.name}</span>
-                </div>
-                <button
-                  onClick={logout}
-                  className="flex items-center gap-2 rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary/80"
-                >
-                  <LogOut className="h-4 w-4" />
-                  退出
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </button>
+
+                {/* User Dropdown Menu */}
+                {userMenuOpen && (
+                  <>
+                    {/* Backdrop */}
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setUserMenuOpen(false)}
+                    />
+                    
+                    {/* Dropdown */}
+                    <div className="absolute right-0 mt-2 w-48 rounded-lg border border-border bg-popover py-2 shadow-lg z-50">
+                      <Link
+                        href="https://ruanmgjx.dpdns.org/user"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <User className="h-4 w-4" />
+                        用户中心
+                        <ExternalLink className="ml-auto h-3 w-3 text-muted-foreground" />
+                      </Link>
+                      <button
+                        onClick={() => {
+                          logout()
+                          setUserMenuOpen(false)
+                        }}
+                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-accent"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        退出登录
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               <button

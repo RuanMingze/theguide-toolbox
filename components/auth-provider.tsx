@@ -30,11 +30,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function checkAuth() {
     try {
-      const response = await fetch('/api/oauth/status')
-      const data = await response.json()
+      // 从本地存储读取用户信息
+      const storedUser = localStorage.getItem('oauth_user')
+      const isLoggedIn = localStorage.getItem('oauth_logged_in')
 
-      if (data.authenticated && data.user) {
-        setUser(data.user)
+      if (storedUser && isLoggedIn === 'true') {
+        setUser(JSON.parse(storedUser))
       } else {
         setUser(null)
       }
@@ -48,7 +49,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout() {
     try {
+      // 清除本地存储
+      localStorage.removeItem('oauth_user')
+      localStorage.removeItem('oauth_logged_in')
+      
+      // 调用服务端清除 cookie
       await fetch('/api/oauth/status', { method: 'POST' })
+      
       setUser(null)
       window.location.reload()
     } catch (error) {
