@@ -21,6 +21,8 @@ export function useSettings() {
         body.style.removeProperty('background-position')
         body.style.removeProperty('background-attachment')
         body.style.removeProperty('background-color')
+        // 确保有默认的深色背景
+        body.style.backgroundColor = 'var(--background)'
       }
       
       // 应用毛玻璃效果
@@ -32,6 +34,9 @@ export function useSettings() {
         root.style.removeProperty('--glass-bg')
         root.style.removeProperty('--glass-blur')
       }
+    } else {
+      // 没有保存的设置时，确保有默认背景
+      document.body.style.backgroundColor = 'var(--background)'
     }
   }
 

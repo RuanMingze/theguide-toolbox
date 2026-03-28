@@ -1,50 +1,12 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
   /* 自定义壁纸和毛玻璃 */
   --custom-wallpaper: none;
   --glass-bg: rgba(255, 255, 255, 0.1);
   --glass-blur: 20px;
   
-  --background: oklch(0.98 0.005 250);
-  --foreground: oklch(0.15 0.01 250);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0.01 250);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.01 250);
-  --primary: oklch(0.646 0.222 41.116);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.95 0.01 250);
-  --secondary-foreground: oklch(0.2 0.01 250);
-  --muted: oklch(0.93 0.01 250);
-  --muted-foreground: oklch(0.5 0.02 250);
-  --accent: oklch(0.55 0.18 180);
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(80.877% 0.17029 75.348);
-  --destructive-foreground: oklch(80.877% 0.17029 75.348);
-  --border: oklch(0.9 0.01 250);
-  --input: oklch(0.95 0.01 250);
-  --ring: oklch(80.877% 0.17029 75.348);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.75rem;
-  --sidebar: oklch(0.98 0.005 250);
-  --sidebar-foreground: oklch(0.15 0.01 250);
-  --sidebar-primary: oklch(0.646 0.222 41.116);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.93 0.01 250);
-  --sidebar-accent-foreground: oklch(0.2 0.01 250);
-  --sidebar-border: oklch(0.9 0.01 250);
-  --sidebar-ring: oklch(0.646 0.222 41.116);
-}
-
-.dark {
   --background: oklch(0.13 0.01 250);
   --foreground: oklch(0.95 0.005 250);
   --card: oklch(0.17 0.01 250);
@@ -69,6 +31,7 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+  --radius: 0.75rem;
   --sidebar: oklch(0.15 0.01 250);
   --sidebar-foreground: oklch(0.95 0.005 250);
   --sidebar-primary: oklch(0.646 0.222 41.116);
@@ -125,7 +88,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply text-foreground;
+    @apply bg-background text-foreground;
   }
 }
 
