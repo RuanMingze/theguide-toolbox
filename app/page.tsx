@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Navbar } from "@/components/navbar"
+import { useAuth } from "@/components/auth-provider"
+import { useSettings } from "@/hooks/use-settings"
 import { 
   Cloud, 
   Sun, 
@@ -15,7 +17,9 @@ import {
   ChevronRight,
   Compass,
   Wrench,
-  ArrowRight
+  ArrowRight,
+  User,
+  Heart
 } from "lucide-react"
 import Link from "next/link"
 
@@ -350,18 +354,55 @@ function QuickAccessCard({
 }
 
 export default function HomePage() {
+  const { user, isAuthenticated, isLoading } = useAuth()
+  const [glassColor, setGlassColor] = useState<string>('255, 255, 255')
+  const [glassOpacity, setGlassOpacity] = useState<number>(10)
+  
+  // 应用全局设置
+  useSettings()
+
+  useEffect(() => {
+    // 加载设置
+    const savedSettings = localStorage.getItem('theguide-settings')
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings)
+      setGlassColor(settings.glassColor || '255, 255, 255')
+      setGlassOpacity(settings.glassOpacity || 10)
+    }
+  }, [])
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent">
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            欢迎使用 <span className="text-primary">TheGuide</span> 工具箱
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            您的一站式效率工具与网站导航平台
-          </p>
+          {!isLoading && isAuthenticated && user ? (
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex items-center gap-3">
+                {user.avatar_url ? (
+                  <img
+                    src={user.avatar_url}
+                    alt={user.name}
+                    className="h-12 w-12 rounded-full border-2 border-primary"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary">
+                    <User className="h-6 w-6 text-primary-foreground" />
+                  </div>
+                )}
+                <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                  欢迎回来，<span className="text-primary">{user.name}</span>
+                </h1>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                欢迎使用 <span className="text-primary">TheGuide</span> 工具箱
+              </h1>
+            </div>
+          )}
         </div>
 
         {/* Main Grid */}
@@ -383,20 +424,27 @@ export default function HomePage() {
         </div>
 
         {/* Quick Access */}
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <QuickAccessCard
             href="/guide"
             icon={Compass}
             title="网站导航"
-            description="精选50+优质网站，快速访问"
+            description="精选 100+ 优质网站，快速访问"
             gradient="bg-primary"
           />
           <QuickAccessCard
             href="/tools"
             icon={Wrench}
             title="实用工具"
-            description="30+在线工具，提升效率"
+            description="30+ 在线工具，提升效率"
             gradient="bg-accent"
+          />
+          <QuickAccessCard
+            href="/favorites"
+            icon={Heart}
+            title="我的收藏"
+            description="快速访问收藏的工具和网站"
+            gradient="bg-red-500"
           />
         </div>
       </main>

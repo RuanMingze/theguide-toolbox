@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import Script from 'next/script'
 import { AuthProvider } from '@/components/auth-provider'
+import { PageProgress } from '@/components/page-progress'
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="zh-CN" className="dark">
       <body className={`${inter.variable} font-sans antialiased`}>
         <AuthProvider>
+          <PageProgress />
           {children}
           <Analytics />
           <Script 

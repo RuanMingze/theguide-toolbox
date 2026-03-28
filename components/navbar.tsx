@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Compass, Wrench, Menu, X, LogIn, LogOut, User, ChevronDown, ExternalLink } from "lucide-react"
+import { Home, Compass, Wrench, Menu, X, LogIn, LogOut, User, ChevronDown, ExternalLink, Heart, Settings } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth-provider"
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/", label: "首页", icon: Home },
   { href: "/guide", label: "网站导航", icon: Compass },
   { href: "/tools", label: "工具箱", icon: Wrench },
+  { href: "/favorites", label: "我的收藏", icon: Heart }
 ]
 
 export function Navbar() {
@@ -33,7 +34,7 @@ export function Navbar() {
             const Icon = item.icon
             const isActive = pathname === item.href
             return (
-              <Link
+              <a
                 key={item.href}
                 href={item.href}
                 className={cn(
@@ -45,13 +46,28 @@ export function Navbar() {
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
-              </Link>
+              </a>
             )
           })}
         </div>
 
-        {/* Desktop Auth Button */}
-        <div className="hidden md:flex">
+        {/* Desktop Right Section */}
+        <div className="hidden items-center gap-2 md:flex">
+          {/* Settings Button */}
+          <a
+            href="/settings"
+            className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-secondary",
+              pathname === "/settings"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            title="设置"
+          >
+            <Settings className="h-5 w-5" />
+          </a>
+
+          {/* Auth Button */}
           {!isLoading && (
             isAuthenticated ? (
               <div className="relative">

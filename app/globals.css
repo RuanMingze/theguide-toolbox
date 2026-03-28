@@ -4,6 +4,11 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* 自定义壁纸和毛玻璃 */
+  --custom-wallpaper: none;
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-blur: 20px;
+  
   --background: oklch(0.98 0.005 250);
   --foreground: oklch(0.15 0.01 250);
   --card: oklch(1 0 0);
@@ -120,6 +125,24 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
   }
+}
+
+/* 毛玻璃效果 */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+/* 导航栏应用毛玻璃 */
+header {
+  background: var(--glass-bg, oklch(0.98 0.005 250 / 0.8)) !important;
+  backdrop-filter: blur(var(--glass-blur, 20px)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur, 20px)) !important;
+}
+
+.dark header {
+  background: var(--glass-bg, oklch(0.13 0.01 250 / 0.8)) !important;
 }

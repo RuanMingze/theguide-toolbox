@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from "react"
 import { Navbar } from "@/components/navbar"
+import { useFavorites } from "@/hooks/use-favorites"
+import { useSettings } from "@/hooks/use-settings"
 import { 
   Search, 
   FileText, 
@@ -35,7 +37,8 @@ import {
   Copy,
   Check,
   Upload,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Heart
 } from "lucide-react"
 
 interface Tool {
@@ -2166,6 +2169,10 @@ export default function ToolsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null)
+  const { isFavorite, toggleFavorite } = useFavorites()
+  
+  // 应用全局设置
+  useSettings()
 
   const filteredTools = tools.filter(tool => {
     const matchesSearch = 
@@ -2184,7 +2191,7 @@ export default function ToolsPage() {
   }, {} as Record<string, Tool[]>)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent">
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
@@ -2249,24 +2256,48 @@ export default function ToolsPage() {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {categoryTools.map((tool) => {
                   const Icon = tool.icon
+                  const isFav = isFavorite(`tool-${tool.id}`)
                   return (
-                    <button
-                      key={tool.id}
-                      onClick={() => setSelectedTool(tool)}
-                      className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/50 hover:shadow-md"
-                    >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-foreground group-hover:text-primary">
-                          {tool.name}
-                        </h3>
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          {tool.description}
-                        </p>
-                      </div>
-                    </button>
+                    <div key={tool.id} className="relative group">
+                      <button
+                        onClick={() => setSelectedTool(tool)}
+                        className="group flex w-full items-start gap-3 rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/50 hover:shadow-md"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-medium text-foreground group-hover:text-primary">
+                            {tool.name}
+                          </h3>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {tool.description}
+                          </p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleFavorite({
+                            type: 'tool',
+                            id: tool.id,
+                            name: tool.name,
+                            url: `/tools?tool=${tool.id}`,
+                            description: tool.description,
+                            category: tool.category,
+                          })
+                        }}
+                        className="absolute right-2 top-2 rounded-full p-1.5 transition-colors hover:bg-secondary"
+                      >
+                        <Heart
+                          className={`h-4 w-4 ${
+                            isFav
+                              ? "fill-red-500 text-red-500"
+                              : "text-muted-foreground"
+                          }`}
+                        />
+                      </button>
+                    </div>
                   )
                 })}
               </div>
