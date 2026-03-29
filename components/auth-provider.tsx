@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 interface UserProfile {
   id: number
@@ -27,10 +28,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     checkAuth()
   }, [])
+
+  useEffect(() => {
+    const loggedIn = searchParams.get('logged_in')
+    if (loggedIn === 'true') {
+      checkAuth()
+    }
+  }, [searchParams])
 
   async function checkAuth() {
     try {

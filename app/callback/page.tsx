@@ -34,7 +34,7 @@ function OAuthCallbackContent() {
 
       setStatus('success')
       setTimeout(() => {
-        router.push('/')
+        router.push('/?logged_in=true')
       }, 2000)
       return
     }
