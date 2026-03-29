@@ -1,5 +1,5 @@
 // Cloudflare Pages Function - Workers AI Qwen API
-// 路径：/functions/api/workersai/qwen.ts
+// 拦截 /api/workersai/qwen 路由
 
 interface Env {
   AI: Ai
