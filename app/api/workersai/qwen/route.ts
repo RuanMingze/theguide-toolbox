@@ -14,9 +14,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 检查 Workers AI 绑定是否存在
-    const workersAI = (globalThis as any).WORKERS_AI_ENV
-    if (!workersAI) {
+    // 获取 Workers AI 绑定（从 Cloudflare Pages Functions 的 env 中获取）
+    const ai = (request as any).env?.AI || (globalThis as any).AI
+    if (!ai) {
       console.error('Workers AI 绑定未配置')
       return NextResponse.json(
         { error: 'Workers AI 服务未配置' },
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 调用 Workers AI 的 Qwen 模型
-    const response = await workersAI.run('@cf/qwen/qwen2.5-7b-instruct', {
+    const response = await ai.run('@cf/qwen/qwen2.5-7b-instruct', {
       messages,
       temperature,
       max_tokens,
