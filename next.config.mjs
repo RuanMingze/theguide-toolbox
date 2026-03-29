@@ -17,10 +17,8 @@ const nextConfig = {
   },
   turbopack: {},
   // 排除 functions 目录，让 Cloudflare Pages Functions 直接处理
-  experimental: {
-    outputFileTracingExcludes: {
-      '*': ['./functions/**/*'],
-    },
+  outputFileTracingExcludes: {
+    '*': ['./functions/**/*'],
   },
 }
 

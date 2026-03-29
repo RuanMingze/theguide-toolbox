@@ -2,4 +2,5 @@
 build_command = "pnpm build"
 output_directory = ".vercel/output/static"
 
-pages_build_output_dir = "./functions"
+# 指定 functions 目录作为 Pages Functions 源
+pages_functions_path = "./functions"
