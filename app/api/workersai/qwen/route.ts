@@ -15,7 +15,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 获取 Workers AI 绑定（从 Cloudflare Pages Functions 的 env 中获取）
+    console.log('Request env keys:', Object.keys((request as any).env || {}))
+    console.log('Global AI:', !!(globalThis as any).AI)
     const ai = (request as any).env?.AI || (globalThis as any).AI
+    console.log('AI instance:', !!ai)
     if (!ai) {
       console.error('Workers AI 绑定未配置')
       return NextResponse.json(
