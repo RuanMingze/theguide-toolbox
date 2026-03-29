@@ -8,13 +8,17 @@ interface UserProfile {
   email: string
   avatar_url: string
   has_beta_access: boolean
+  provider?: 'ruanm' | 'github'
+  github_login?: string
 }
+
+export type LoginMethod = 'ruanm' | 'github'
 
 interface AuthContextType {
   user: UserProfile | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: () => void
+  login: (method?: LoginMethod) => void
   logout: () => Promise<void>
 }
 
@@ -63,8 +67,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function login() {
+  async function login(method: LoginMethod = 'ruanm') {
     try {
+      if (method === 'github') {
+        const response = await fetch('/api/oauth/github/authorize')
+        const data = await response.json()
+        
+        if (data.authUrl) {
+          window.location.href = data.authUrl
+        } else {
+          console.error('No GitHub authUrl in response')
+        }
+        return
+      }
+      
       const response = await fetch('/api/oauth/authorize')
       const data = await response.json()
       

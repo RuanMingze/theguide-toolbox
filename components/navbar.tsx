@@ -2,18 +2,26 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Compass, Wrench, Menu, X, LogIn, LogOut, User, ChevronDown, ExternalLink, Heart, Settings } from "lucide-react"
-import { useState } from "react"
+import { Home, Compass, Wrench, Menu, X, LogIn, LogOut, User, ChevronDown, ExternalLink, Heart, Settings, Github } from "lucide-react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth-provider"
 import { useTranslation } from "@/hooks/use-translation"
+import type { LoginMethod } from "@/components/auth-provider"
+import { createPortal } from "react-dom"
 
 export function Navbar() {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const { user, isAuthenticated, isLoading, login, logout } = useAuth()
   const { t } = useTranslation()
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   
   const navItems = [
     { href: "/", label: t("首页"), icon: Home },
@@ -128,13 +136,76 @@ export function Navbar() {
               </div>
             ) : (
               <button
-                onClick={login}
+                onClick={() => setLoginDialogOpen(true)}
                 className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 <LogIn className="h-4 w-4" />
                 {t("登录")}
               </button>
             )
+          )}
+
+          {/* Login Dialog */}
+          {loginDialogOpen && mounted && createPortal(
+            <>
+              <div 
+                className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
+                onClick={() => setLoginDialogOpen(false)}
+              />
+              <div 
+                className="fixed inset-0 z-[101] flex items-center justify-center p-4"
+                onClick={() => setLoginDialogOpen(false)}
+              >
+                <div 
+                  className="w-full max-w-md rounded-2xl border border-border bg-popover p-6 shadow-xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="mb-6 text-center">
+                    <h3 className="text-lg font-semibold text-foreground">选择登录方式</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">请选择您要使用的登录方式</p>
+                  </div>
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => {
+                        login('ruanm')
+                        setLoginDialogOpen(false)
+                      }}
+                      className="flex w-full items-center gap-3 rounded-lg border border-border bg-background p-4 transition-colors hover:bg-accent"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <User className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Ruanm 账号登录</p>
+                        <p className="text-xs text-muted-foreground">使用您的 Ruanm 账号快速登录</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        login('github')
+                        setLoginDialogOpen(false)
+                      }}
+                      className="flex w-full items-center gap-3 rounded-lg border border-border bg-background p-4 transition-colors hover:bg-accent"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#24292e] text-white dark:bg-[#f0f6fc] dark:text-[#24292e]">
+                        <Github className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">GitHub 登录</p>
+                        <p className="text-xs text-muted-foreground">使用您的 GitHub 账号登录</p>
+                      </div>
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setLoginDialogOpen(false)}
+                    className="mt-4 w-full rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+                  >
+                    取消
+                  </button>
+                </div>
+              </div>
+            </>,
+            document.body
           )}
         </div>
 
@@ -207,7 +278,7 @@ export function Navbar() {
               ) : (
                 <button
                   onClick={() => {
-                    login()
+                    setLoginDialogOpen(true)
                     setMobileMenuOpen(false)
                   }}
                   className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"

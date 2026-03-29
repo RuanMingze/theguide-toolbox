@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
@@ -17,7 +17,6 @@ export const metadata: Metadata = {
   description: '您的一站式效率工具与网站导航平台',
   generator: 'Ruanm',
   manifest: '/manifest.json',
-  themeColor: '#f97316',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -27,6 +26,10 @@ export const metadata: Metadata = {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#f97316',
 }
 
 export default function RootLayout({
