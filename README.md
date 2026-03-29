@@ -59,6 +59,10 @@
 - 日历 - 查看日历信息
 - 天气预报 - 自动定位获取天气信息（支持 OpenWeather API）
 
+### 🤖 AI 功能
+- WorkersAI 集成 - 集成 Cloudflare Workers AI 服务
+- Qwen 对话 - 调用通义千问（Qwen2.5-7B-Instruct）模型进行智能对话
+
 ## 🚀 技术栈
 
 - **框架**: Next.js 16.2.0
@@ -103,16 +107,39 @@ RUANM_OAUTH_CLIENT_ID=your_client_id
 RUANM_OAUTH_CLIENT_SECRET=your_client_secret
 RUANM_OAUTH_REDIRECT_URI=https://your-domain.com/callback
 RUANM_OAUTH_BASE_URL=https://ruanmgjx.dpdns.org
+
+# GitHub OAuth (用于 GitHub 登录功能)
+GITHUB_OAUTH_CLIENT_ID=your_github_client_id
+GITHUB_OAUTH_CLIENT_SECRET=your_github_client_secret
+GITHUB_OAUTH_REDIRECT_URI=https://your-domain.com/githubcallback
+
+# WorkersAI (用于 AI 对话功能)
+# 在 Cloudflare Pages 中绑定 Workers AI 资源集，名称为 WORKERS_AI_ENV
 ```
 
 获取 API Key: [OpenWeather](https://openweathermap.org/api)
 
 ### OAuth 配置说明
 
+#### Ruanm OAuth 配置
 1. 在 Ruanm 平台创建 OAuth 应用
 2. 设置回调地址为 `https://your-domain.com/callback`
 3. 将 Client ID 和 Client Secret 填入环境变量
 4. 用户登录后可以访问个性化功能
+
+#### GitHub OAuth 配置
+1. 在 GitHub Settings > Developer settings > OAuth Apps 创建新应用
+2. 设置 Homepage URL 为 `https://your-domain.com`
+3. 设置 Authorization callback URL 为 `https://your-domain.com/githubcallback`
+4. 将 Client ID 和 Client Secret 填入环境变量
+
+### WorkersAI 配置说明
+
+1. 在 Cloudflare Dashboard 中进入 Pages 项目
+2. 前往 设置 > 绑定 > 添加绑定 > Workers AI
+3. 变量名称设置为 `WORKERS_AI_ENV`
+4. 选择已启用的 Workers AI 资源集
+5. 保存后重新部署即可使用 Qwen 模型
 
 ### 温馨提醒
 实际生产环境已经配置好env了，无需手动配置。
@@ -125,6 +152,8 @@ RUANM_OAUTH_BASE_URL=https://ruanmgjx.dpdns.org
 - ✅ **免费部署** - 可部署到 Cloudflare Pages，零成本
 - ✅ **响应式设计** - 支持桌面和移动端
 - ✅ **用户登录** - 支持 Ruanm OAuth 2.0 登录
+- ✅ **GitHub 登录** - 支持 GitHub OAuth 2.0 登录
+- ✅ **AI 对话** - 集成 Cloudflare Workers AI，支持 Qwen 大模型对话
 
 ## 🔒 隐私说明
 
