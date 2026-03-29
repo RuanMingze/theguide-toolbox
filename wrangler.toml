@@ -1,0 +1,5 @@
+[pages]
+build_command = "pnpm build"
+output_directory = ".vercel/output/static"
+
+pages_build_output_dir = "./functions"
