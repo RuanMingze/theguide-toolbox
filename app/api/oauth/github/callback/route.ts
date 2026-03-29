@@ -16,8 +16,12 @@ export async function POST(request: NextRequest) {
 
     // 验证 CSRF state 参数
     const savedState = request.cookies.get('github_oauth_state')?.value
+    console.log('Received state:', state)
+    console.log('Saved state:', savedState)
+    console.log('State match:', state === savedState)
+    
     if (!state || !savedState || state !== savedState) {
-      console.error('CSRF state mismatch')
+      console.error('CSRF state mismatch', { state, savedState })
       return NextResponse.json(
         { success: false, error: 'CSRF validation failed' },
         { status: 400 }

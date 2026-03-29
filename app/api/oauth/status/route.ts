@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({ success: true })
     response.cookies.delete('oauth_access_token')
     response.cookies.delete('oauth_user_profile')
+    response.cookies.delete('oauth_state')
     return response
   } catch (error) {
     console.error('OAuth logout error:', error)

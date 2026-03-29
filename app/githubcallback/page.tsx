@@ -54,7 +54,7 @@ function GitHubCallbackContent() {
           console.error('GitHub callback error:', err)
           setStatus('error')
           setTimeout(() => {
-            router.push('/')
+            router.push('/?error=github_callback_failed')
           }, 3000)
         })
       return

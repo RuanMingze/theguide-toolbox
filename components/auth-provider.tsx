@@ -64,9 +64,32 @@ function AuthProviderContent({ children }: { children: ReactNode }) {
       // 清除本地存储
       localStorage.removeItem('oauth_user')
       localStorage.removeItem('oauth_logged_in')
+      localStorage.removeItem('oauth_provider')
+      
+      // 清除会话存储
+      sessionStorage.clear()
+      
+      // 清除 IndexedDB（如果有）
+      try {
+        const databases = await indexedDB.databases()
+        databases.forEach((db) => {
+          if (db.name) {
+            indexedDB.deleteDatabase(db.name)
+          }
+        })
+      } catch (e) {
+        console.warn('Failed to clear IndexedDB:', e)
+      }
       
       // 调用服务端清除 cookie
       await fetch('/api/oauth/status', { method: 'POST' })
+      
+      // 清除 GitHub OAuth 相关的 cookie（通过服务端 API）
+      try {
+        await fetch('/api/oauth/github/logout', { method: 'POST' })
+      } catch (e) {
+        console.warn('Failed to clear GitHub OAuth cookies:', e)
+      }
       
       setUser(null)
       window.location.reload()
