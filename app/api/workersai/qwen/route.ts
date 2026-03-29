@@ -15,16 +15,21 @@ export async function POST(request: NextRequest) {
     }
 
     // 获取 Workers AI 绑定（从 Cloudflare Pages Functions 的 env 中获取）
-    console.log('Request env keys:', Object.keys((request as any).env || {}))
-    console.log('Global AI:', !!(globalThis as any).AI)
+    const envKeys = Object.keys((request as any).env || {})
+    const hasGlobalAI = !!(globalThis as any).AI
     const ai = (request as any).env?.AI || (globalThis as any).AI
-    console.log('AI instance:', !!ai)
+    
     if (!ai) {
-      console.error('Workers AI 绑定未配置')
-      return NextResponse.json(
-        { error: 'Workers AI 服务未配置' },
-        { status: 500 }
-      )
+      // 返回调试信息帮助诊断
+      return NextResponse.json({
+        error: 'Workers AI 服务未配置',
+        debug: {
+          envKeys,
+          hasGlobalAI,
+          envAI: !!(request as any).env?.AI,
+          message: '请在 Cloudflare Pages 设置中绑定 Workers AI，变量名称为 AI'
+        }
+      }, { status: 500 })
     }
 
     // 调用 Workers AI 的 Qwen 模型
