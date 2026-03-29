@@ -1,7 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { createContext, useContext, useState, useEffect, ReactNode, Suspense } from 'react'
 
 interface UserProfile {
   id: number
@@ -25,21 +24,21 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+function AuthProviderContent({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const searchParams = useSearchParams()
 
   useEffect(() => {
     checkAuth()
   }, [])
 
   useEffect(() => {
-    const loggedIn = searchParams.get('logged_in')
-    if (loggedIn === 'true') {
+    const handleStorageChange = () => {
       checkAuth()
     }
-  }, [searchParams])
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
 
   async function checkAuth() {
     try {
@@ -115,6 +114,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     >
       {children}
     </AuthContext.Provider>
+  )
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <AuthProviderContent>{children}</AuthProviderContent>
+    </Suspense>
   )
 }
 
