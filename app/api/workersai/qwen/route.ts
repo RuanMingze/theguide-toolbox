@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         'cf-aig-authorization': `Bearer ${apiToken}`,
       },
       body: JSON.stringify({
-        model: 'workers-ai/@cf/qwen/qwen2.5-7b-instruct',
+        model: 'workers-ai/@cf/qwen/qwen3-30b-a3b-fp8',
         messages,
         temperature,
         max_tokens,
