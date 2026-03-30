@@ -27,7 +27,7 @@ export function Navbar() {
     { href: "/", label: t("首页"), icon: Home },
     { href: "/guide", label: t("网站导航"), icon: Compass },
     { href: "/tools", label: t("工具箱"), icon: Wrench },
-    { href: "/ai", label: t("AI 助手"), icon: Bot },
+    { href: "https://ai.ruanmgjx.dpdns.org/", label: t("AI 助手"), icon: Bot, external: true },
     { href: "/favorites", label: t("我的收藏"), icon: Heart }
   ]
 
@@ -44,7 +44,19 @@ export function Navbar() {
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
-            return (
+            return item.external ? (
+              <a
+                key={item.href}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+                <ExternalLink className="h-3 w-3 text-muted-foreground" />
+              </a>
+            ) : (
               <a
                 key={item.href}
                 href={item.href}
@@ -226,7 +238,20 @@ export function Navbar() {
             {navItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href
-              return (
+              return item.external ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.label}
+                  <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                </a>
+              ) : (
                 <Link
                   key={item.href}
                   href={item.href}
