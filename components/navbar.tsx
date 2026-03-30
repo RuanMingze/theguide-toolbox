@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Compass, Wrench, Menu, X, LogIn, LogOut, User, ChevronDown, ExternalLink, Heart, Settings, Github } from "lucide-react"
+import { Home, Compass, Wrench, Menu, X, LogIn, LogOut, User, ChevronDown, ExternalLink, Heart, Settings, Github, Bot } from "lucide-react"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth-provider"
@@ -27,6 +27,7 @@ export function Navbar() {
     { href: "/", label: t("首页"), icon: Home },
     { href: "/guide", label: t("网站导航"), icon: Compass },
     { href: "/tools", label: t("工具箱"), icon: Wrench },
+    { href: "/ai", label: t("AI 助手"), icon: Bot },
     { href: "/favorites", label: t("我的收藏"), icon: Heart }
   ]
 
