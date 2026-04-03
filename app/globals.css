@@ -109,3 +109,85 @@ header {
 .dark header {
   background: var(--glass-bg, oklch(0.13 0.01 250 / 0.8)) !important;
 }
+
+/* 液体玻璃效果 - iOS 26 风格 */
+.liquid-glass-filter {
+  position: fixed;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* 液体玻璃效果应用到所有卡片和容器 */
+.liquid-glass-enabled .bg-card,
+.liquid-glass-enabled .rounded-xl,
+.liquid-glass-enabled header,
+.liquid-glass-enabled [class*="border-border"] {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(40px) saturate(180%) brightness(1.1) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.1) !important;
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 0 80px rgba(255, 255, 255, 0.05) inset !important;
+  filter: url(#liquid-glass-filter) !important;
+}
+
+/* 液体玻璃按钮效果 */
+.liquid-glass-enabled button,
+.liquid-glass-enabled .bg-primary,
+.liquid-glass-enabled .bg-secondary {
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 液体玻璃高光效果 */
+.liquid-glass-enabled .bg-card::before,
+.liquid-glass-enabled .rounded-xl::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* 液体玻璃折射边缘 */
+.liquid-glass-enabled .bg-card,
+.liquid-glass-enabled .rounded-xl {
+  position: relative;
+  overflow: hidden;
+}
+
+.liquid-glass-enabled .bg-card::after,
+.liquid-glass-enabled .rounded-xl::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 40%,
+    transparent 60%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  padding: 1px;
+}
