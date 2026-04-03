@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Image, Eye, EyeOff, X, Upload, Link as LinkIcon } from 'lucide-react'
+import { Image, Eye, EyeOff, X, Upload, Link as LinkIcon, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 import { useTranslation } from '@/hooks/use-translation'
@@ -45,6 +45,9 @@ export default function SettingsPage() {
   const [glassEffect, setGlassEffect] = useState<boolean>(true)
   const [glassColor, setGlassColor] = useState<string>('255, 255, 255')
   const [glassOpacity, setGlassOpacity] = useState<number>(10)
+  const [liquidGlassEffect, setLiquidGlassEffect] = useState<boolean>(false)
+  const [liquidBlur, setLiquidBlur] = useState<number>(50)
+  const [liquidRefraction, setLiquidRefraction] = useState<number>(200)
   const [customImageUrl, setCustomImageUrl] = useState<string>('')
   const [isImageUrlMode, setIsImageUrlMode] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -61,6 +64,9 @@ export default function SettingsPage() {
       setGlassEffect(settings.glassEffect ?? true)
       setGlassColor(settings.glassColor || '255, 255, 255')
       setGlassOpacity(settings.glassOpacity || 10)
+      setLiquidGlassEffect(settings.liquidGlassEffect ?? false)
+      setLiquidBlur(settings.liquidBlur ?? 50)
+      setLiquidRefraction(settings.liquidRefraction ?? 200)
       if (settings.customImageUrl) {
         setCustomImageUrl(settings.customImageUrl)
       }
@@ -94,16 +100,27 @@ export default function SettingsPage() {
       body.style.removeProperty('background-color')
     }
     
-    // 应用毛玻璃效果
+    // 应用液体玻璃或毛玻璃效果
     const root = document.documentElement
-    if (glassEffect) {
-      root.style.setProperty('--glass-bg', `rgba(${glassColor}, ${glassOpacity / 100})`)
-      root.style.setProperty('--glass-blur', '20px')
-    } else {
+    
+    if (liquidGlassEffect) {
+      // 液体玻璃启用时，关闭毛玻璃
+      body.classList.add('liquid-glass-enabled')
+      root.style.setProperty('--lg-blur', `${liquidBlur}px`)
+      root.style.setProperty('--lg-refraction', `${liquidRefraction}%`)
       root.style.removeProperty('--glass-bg')
       root.style.removeProperty('--glass-blur')
+    } else {
+      body.classList.remove('liquid-glass-enabled')
+      if (glassEffect) {
+        root.style.setProperty('--glass-bg', `rgba(${glassColor}, ${glassOpacity / 100})`)
+        root.style.setProperty('--glass-blur', '20px')
+      } else {
+        root.style.removeProperty('--glass-bg')
+        root.style.removeProperty('--glass-blur')
+      }
     }
-  }, [wallpaper, glassEffect, glassColor, glassOpacity])
+  }, [wallpaper, glassEffect, glassColor, glassOpacity, liquidGlassEffect, liquidBlur, liquidRefraction])
 
   const handleSettingChange = () => {
     setHasUnsavedChanges(true)
@@ -116,6 +133,9 @@ export default function SettingsPage() {
       glassEffect,
       glassColor,
       glassOpacity,
+      liquidGlassEffect,
+      liquidBlur,
+      liquidRefraction,
       customImageUrl,
     }
     localStorage.setItem('theguide-settings', JSON.stringify(settings))
@@ -127,15 +147,22 @@ export default function SettingsPage() {
       // 3 秒后自动隐藏提示
       setTimeout(() => setShowRefreshTip(false), 3000)
     }
-  }, [wallpaper, glassEffect, glassColor, glassOpacity, customImageUrl])
+  }, [wallpaper, glassEffect, glassColor, glassOpacity, liquidGlassEffect, liquidBlur, liquidRefraction, customImageUrl])
 
   const handleReset = () => {
     setWallpaper('')
     setGlassEffect(true)
     setGlassColor('255, 255, 255')
     setGlassOpacity(10)
+    setLiquidGlassEffect(false)
+    setLiquidBlur(50)
+    setLiquidRefraction(200)
     setCustomImageUrl('')
     localStorage.removeItem('theguide-settings')
+    document.body.classList.remove('liquid-glass-enabled')
+    const root = document.documentElement
+    root.style.setProperty('--lg-blur', '50px')
+    root.style.setProperty('--lg-refraction', '200%')
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -347,27 +374,138 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* 毛玻璃效果 */}
+          {/* 液体玻璃效果（实验性） */}
           <div className="rounded-xl border border-border bg-card p-6">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Eye className="h-5 w-5 text-primary" />
-                <h2 className="text-lg font-semibold text-foreground">{t("毛玻璃效果")}</h2>
+                <Sparkles className="h-5 w-5 text-primary" />
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    {lang === 'en' ? 'Liquid Glass' : '液体玻璃'}
+                    <span className="ml-2 rounded-full bg-primary/20 px-2 py-0.5 text-xs font-normal text-primary">
+                      {lang === 'en' ? 'Experimental' : '实验性'}
+                    </span>
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    {lang === 'en' ? 'iOS 26 style liquid glass effect' : 'iOS 26 风格的液体玻璃效果'}
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => {
                   handleSettingChange()
-                  setGlassEffect(!glassEffect)
+                  const newValue = !liquidGlassEffect
+                  setLiquidGlassEffect(newValue)
+                  // 开启液体玻璃时自动关闭毛玻璃
+                  if (newValue) {
+                    setGlassEffect(false)
+                  }
                 }}
                 className={cn(
                   "relative h-6 w-11 rounded-full transition-colors",
-                  glassEffect ? "bg-primary" : "bg-muted"
+                  liquidGlassEffect ? "bg-primary" : "bg-muted"
                 )}
               >
                 <div
                   className={cn(
                     "absolute top-1 h-4 w-4 rounded-full bg-white transition-transform",
-                    glassEffect ? "left-6" : "left-1"
+                    liquidGlassEffect ? "left-6" : "left-1"
+                  )}
+                />
+              </button>
+            </div>
+            
+            {liquidGlassEffect && (
+              <div className="space-y-5 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                {/* 模糊度滑块 */}
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <label className="text-sm font-medium text-foreground">
+                      {lang === 'en' ? 'Blur' : '模糊度'}
+                    </label>
+                    <span className="text-sm tabular-nums text-muted-foreground">{liquidBlur}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={liquidBlur}
+                    onChange={(e) => {
+                      handleSettingChange()
+                      setLiquidBlur(Number(e.target.value))
+                    }}
+                    className="w-full accent-primary"
+                  />
+                  <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+                    <span>0px</span>
+                    <span>100px</span>
+                  </div>
+                </div>
+
+                {/* 折射度滑块 */}
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <label className="text-sm font-medium text-foreground">
+                      {lang === 'en' ? 'Refraction (Saturation)' : '折射度（饱和度）'}
+                    </label>
+                    <span className="text-sm tabular-nums text-muted-foreground">{liquidRefraction}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="100"
+                    max="400"
+                    step="5"
+                    value={liquidRefraction}
+                    onChange={(e) => {
+                      handleSettingChange()
+                      setLiquidRefraction(Number(e.target.value))
+                    }}
+                    className="w-full accent-primary"
+                  />
+                  <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+                    <span>100%</span>
+                    <span>400%</span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  {lang === 'en'
+                    ? 'Frosted glass has been automatically disabled.'
+                    : '毛玻璃效果已自动关闭。'}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* 毛玻璃效果 */}
+          <div className={cn("rounded-xl border border-border bg-card p-6", liquidGlassEffect && "opacity-50 pointer-events-none")}>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Eye className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">{t("毛玻璃效果")}</h2>
+                {liquidGlassEffect && (
+                  <span className="text-xs text-muted-foreground">
+                    ({lang === 'en' ? 'Disabled when Liquid Glass is on' : '液体玻璃开启时不可用'})
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  if (!liquidGlassEffect) {
+                    handleSettingChange()
+                    setGlassEffect(!glassEffect)
+                  }
+                }}
+                className={cn(
+                  "relative h-6 w-11 rounded-full transition-colors",
+                  glassEffect && !liquidGlassEffect ? "bg-primary" : "bg-muted"
+                )}
+              >
+                <div
+                  className={cn(
+                    "absolute top-1 h-4 w-4 rounded-full bg-white transition-transform",
+                    glassEffect && !liquidGlassEffect ? "left-6" : "left-1"
                   )}
                 />
               </button>

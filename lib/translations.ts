@@ -104,6 +104,10 @@ export const translatableTexts: string[] = [
   '预览',
   '重置为默认设置',
   '设置已自动保存',
+  '液体玻璃',
+  '实验性',
+  'iOS 26 风格的液体玻璃效果',
+  '液体玻璃开启时不可用',
 ]
 
 // 节日数据库英文翻译
@@ -221,6 +225,10 @@ export const englishTranslations: Record<string, string> = {
   '重置设置': 'Reset Settings',
   '已保存': 'Saved',
   '设置已保存，刷新页面后生效': 'Settings saved, refresh page to apply',
+  '液体玻璃': 'Liquid Glass',
+  '实验性': 'Experimental',
+  'iOS 26 风格的液体玻璃效果': 'iOS 26 style liquid glass effect',
+  '液体玻璃开启时不可用': 'Disabled when Liquid Glass is on',
 }
 
 // 检测用户语言
