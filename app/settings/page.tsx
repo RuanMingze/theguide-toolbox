@@ -46,6 +46,8 @@ export default function SettingsPage() {
   const [glassColor, setGlassColor] = useState<string>('255, 255, 255')
   const [glassOpacity, setGlassOpacity] = useState<number>(10)
   const [liquidGlassEffect, setLiquidGlassEffect] = useState<boolean>(false)
+  const [liquidBlur, setLiquidBlur] = useState<number>(50)
+  const [liquidRefraction, setLiquidRefraction] = useState<number>(200)
   const [customImageUrl, setCustomImageUrl] = useState<string>('')
   const [isImageUrlMode, setIsImageUrlMode] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -63,6 +65,8 @@ export default function SettingsPage() {
       setGlassColor(settings.glassColor || '255, 255, 255')
       setGlassOpacity(settings.glassOpacity || 10)
       setLiquidGlassEffect(settings.liquidGlassEffect ?? false)
+      setLiquidBlur(settings.liquidBlur ?? 50)
+      setLiquidRefraction(settings.liquidRefraction ?? 200)
       if (settings.customImageUrl) {
         setCustomImageUrl(settings.customImageUrl)
       }
@@ -101,11 +105,13 @@ export default function SettingsPage() {
     
     if (liquidGlassEffect) {
       // 液体玻璃启用时，关闭毛玻璃
-      document.body.classList.add('liquid-glass-enabled')
+      body.classList.add('liquid-glass-enabled')
+      root.style.setProperty('--lg-blur', `${liquidBlur}px`)
+      root.style.setProperty('--lg-refraction', `${liquidRefraction}%`)
       root.style.removeProperty('--glass-bg')
       root.style.removeProperty('--glass-blur')
     } else {
-      document.body.classList.remove('liquid-glass-enabled')
+      body.classList.remove('liquid-glass-enabled')
       if (glassEffect) {
         root.style.setProperty('--glass-bg', `rgba(${glassColor}, ${glassOpacity / 100})`)
         root.style.setProperty('--glass-blur', '20px')
@@ -114,7 +120,7 @@ export default function SettingsPage() {
         root.style.removeProperty('--glass-blur')
       }
     }
-  }, [wallpaper, glassEffect, glassColor, glassOpacity, liquidGlassEffect])
+  }, [wallpaper, glassEffect, glassColor, glassOpacity, liquidGlassEffect, liquidBlur, liquidRefraction])
 
   const handleSettingChange = () => {
     setHasUnsavedChanges(true)
@@ -128,6 +134,8 @@ export default function SettingsPage() {
       glassColor,
       glassOpacity,
       liquidGlassEffect,
+      liquidBlur,
+      liquidRefraction,
       customImageUrl,
     }
     localStorage.setItem('theguide-settings', JSON.stringify(settings))
@@ -139,7 +147,7 @@ export default function SettingsPage() {
       // 3 秒后自动隐藏提示
       setTimeout(() => setShowRefreshTip(false), 3000)
     }
-  }, [wallpaper, glassEffect, glassColor, glassOpacity, liquidGlassEffect, customImageUrl])
+  }, [wallpaper, glassEffect, glassColor, glassOpacity, liquidGlassEffect, liquidBlur, liquidRefraction, customImageUrl])
 
   const handleReset = () => {
     setWallpaper('')
@@ -147,9 +155,14 @@ export default function SettingsPage() {
     setGlassColor('255, 255, 255')
     setGlassOpacity(10)
     setLiquidGlassEffect(false)
+    setLiquidBlur(50)
+    setLiquidRefraction(200)
     setCustomImageUrl('')
     localStorage.removeItem('theguide-settings')
     document.body.classList.remove('liquid-glass-enabled')
+    const root = document.documentElement
+    root.style.setProperty('--lg-blur', '50px')
+    root.style.setProperty('--lg-refraction', '200%')
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -403,11 +416,63 @@ export default function SettingsPage() {
             </div>
             
             {liquidGlassEffect && (
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                <p className="text-sm text-muted-foreground">
-                  {lang === 'en' 
-                    ? 'Liquid Glass effect is now enabled. The frosted glass effect has been automatically disabled. This effect simulates the iOS 26 liquid glass style with refraction and specular highlights.'
-                    : '液体玻璃效果已启用，毛玻璃效果已自动关闭。此效果模拟 iOS 26 的液体玻璃风格，包含折射和高光效果。'}
+              <div className="space-y-5 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                {/* 模糊度滑块 */}
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <label className="text-sm font-medium text-foreground">
+                      {lang === 'en' ? 'Blur' : '模糊度'}
+                    </label>
+                    <span className="text-sm tabular-nums text-muted-foreground">{liquidBlur}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={liquidBlur}
+                    onChange={(e) => {
+                      handleSettingChange()
+                      setLiquidBlur(Number(e.target.value))
+                    }}
+                    className="w-full accent-primary"
+                  />
+                  <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+                    <span>0px</span>
+                    <span>100px</span>
+                  </div>
+                </div>
+
+                {/* 折射度滑块 */}
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <label className="text-sm font-medium text-foreground">
+                      {lang === 'en' ? 'Refraction (Saturation)' : '折射度（饱和度）'}
+                    </label>
+                    <span className="text-sm tabular-nums text-muted-foreground">{liquidRefraction}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="100"
+                    max="400"
+                    step="5"
+                    value={liquidRefraction}
+                    onChange={(e) => {
+                      handleSettingChange()
+                      setLiquidRefraction(Number(e.target.value))
+                    }}
+                    className="w-full accent-primary"
+                  />
+                  <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+                    <span>100%</span>
+                    <span>400%</span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  {lang === 'en'
+                    ? 'Frosted glass has been automatically disabled.'
+                    : '毛玻璃效果已自动关闭。'}
                 </p>
               </div>
             )}

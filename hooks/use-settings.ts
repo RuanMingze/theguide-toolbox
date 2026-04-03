@@ -59,6 +59,10 @@ export function useSettings() {
           document.body.appendChild(svgContainer)
         }
         
+        // 应用液体玻璃参数
+        root.style.setProperty('--lg-blur', `${settings.liquidBlur ?? 50}px`)
+        root.style.setProperty('--lg-refraction', `${settings.liquidRefraction ?? 200}%`)
+        
         // 移除毛玻璃变量
         root.style.removeProperty('--glass-bg')
         root.style.removeProperty('--glass-blur')
