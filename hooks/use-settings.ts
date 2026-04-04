@@ -46,17 +46,14 @@ export function useSettings() {
       // 应用液体玻璃效果（优先于毛玻璃）
       const root = document.documentElement
       if (settings.liquidGlassEffect) {
-        // 启用液体玻璃时，添加 class 和 SVG 滤镜
+        // 启用液体玻璃时，添加 class
         body.classList.add('liquid-glass-enabled')
         body.classList.remove('glass-enabled')
         
-        // 注入 SVG 滤镜
-        let svgContainer = document.getElementById('liquid-glass-svg-container')
-        if (!svgContainer) {
-          svgContainer = document.createElement('div')
-          svgContainer.id = 'liquid-glass-svg-container'
-          svgContainer.innerHTML = LIQUID_GLASS_SVG
-          document.body.appendChild(svgContainer)
+        // 移除 SVG 滤镜容器（不再使用）
+        const svgContainer = document.getElementById('liquid-glass-svg-container')
+        if (svgContainer) {
+          svgContainer.remove()
         }
         
         // 应用液体玻璃参数

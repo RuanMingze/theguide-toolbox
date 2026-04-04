@@ -251,7 +251,7 @@ function Weather({ lang }: { lang: string }) {
       { day: "周四", temp: 19, condition: "阴" },
     ],
     loading: true,
-    error: null
+    error: null as string | null
   })
 
   useEffect(() => {
@@ -268,20 +268,36 @@ function Weather({ lang }: { lang: string }) {
   useEffect(() => {
     setIsMounted(true)
     
+    // 设置超时，防止地理位置获取卡住
+    const timeoutId = setTimeout(() => {
+      console.warn("Geolocation timeout, using default location")
+      setLocation("Deqing")
+    }, 5000) // 5 秒超时
+    
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          clearTimeout(timeoutId)
           const { latitude, longitude } = position.coords
           setLocation(`${latitude},${longitude}`)
         },
         (error) => {
+          clearTimeout(timeoutId)
           console.error("Geolocation error:", error)
           setLocation("Beijing")
+        },
+        {
+          timeout: 4000,
+          maximumAge: 300000 // 5 分钟内的缓存位置可以使用
         }
       )
     } else {
+      clearTimeout(timeoutId)
       setLocation("Beijing")
     }
+    
+    // 清理函数
+    return () => clearTimeout(timeoutId)
   }, [])
 
   useEffect(() => {
@@ -352,7 +368,7 @@ function Weather({ lang }: { lang: string }) {
         setWeather(prev => ({
           ...prev,
           loading: false,
-          error: weatherLang === 'en' ? "Failed to load weather" : "天气数据加载失败"
+          error: weatherLang === 'en' ? "Failed to load weather" : "天气数据加载失败" as string | null
         }))
       }
     }
@@ -360,7 +376,7 @@ function Weather({ lang }: { lang: string }) {
     fetchWeather()
   }, [location, weatherLang])
 
-  const getWeatherIcon = (condition: string) => {
+  const getWeatherIcon = (condition: string | null | undefined) => {
     switch (condition) {
       case "晴": return <Sun className="h-12 w-12 text-amber-400" />
       case "多云": return <Cloud className="h-12 w-12 text-gray-400" />
@@ -380,7 +396,7 @@ function Weather({ lang }: { lang: string }) {
     }
   }
 
-  if (!isMounted || !location) {
+  if (!isMounted) {
     return (
       <div className="rounded-2xl bg-card p-6 shadow-sm border border-border">
         <div className="text-center text-muted-foreground">
