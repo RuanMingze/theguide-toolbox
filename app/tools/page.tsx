@@ -2403,7 +2403,7 @@ function IpLookupTool() {
     setResult(null)
     
     try {
-      const res = await fetch(`http://ip-api.com/json/${ip.trim()}`)
+      const res = await fetch(`https://ip-api.com/json/${ip.trim()}`)
       const data = await res.json()
       
       if (data.status === 'fail') {

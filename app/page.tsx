@@ -373,7 +373,7 @@ function Weather({ lang, userLocation }: { lang: string; userLocation: string | 
     // 否则使用 ip-api.com 获取位置
     const fetchLocation = async () => {
       try {
-        const res = await fetch('http://ip-api.com/json/?lang=zh-CN')
+        const res = await fetch('https://ip-api.com/json/?lang=zh-CN')
         if (!res.ok) {
           throw new Error("Failed to fetch location from ip-api")
         }
