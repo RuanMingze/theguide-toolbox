@@ -28,12 +28,12 @@ export function TimeDisplay() {
     )
   }
 
-  const hours = time.getHours().toString().padStart(2, "0")
-  const minutes = time.getMinutes().toString().padStart(2, "0")
-  const seconds = time.getSeconds().toString().padStart(2, "0")
+  const hours = time?.getHours().toString().padStart(2, "0") ?? "--"
+  const minutes = time?.getMinutes().toString().padStart(2, "0") ?? "--"
+  const seconds = time?.getSeconds().toString().padStart(2, "0") ?? "--"
   
   const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
-  const dateStr = `${time.getFullYear()}年${time.getMonth() + 1}月${time.getDate()}日 ${weekdays[time.getDay()]}`
+  const dateStr = time ? `${time.getFullYear()}年${time.getMonth() + 1}月${time.getDate()}日 ${weekdays[time.getDay()]}` : ""
 
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl bg-card p-8 shadow-sm border border-border">

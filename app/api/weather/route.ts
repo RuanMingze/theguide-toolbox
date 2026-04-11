@@ -45,12 +45,26 @@ export async function GET(request: NextRequest) {
       fetch(forecastUrl)
     ])
 
-    if (!currentRes.ok || !forecastRes.ok) {
-      throw new Error("Failed to fetch weather data")
+    if (!currentRes.ok) {
+      console.error("OpenWeather API current weather error:", currentRes.status, currentRes.statusText)
+      return NextResponse.json(
+        { error: `Weather API error: ${currentRes.status}` },
+        { status: currentRes.status }
+      )
+    }
+
+    if (!forecastRes.ok) {
+      console.error("OpenWeather API forecast error:", forecastRes.status, forecastRes.statusText)
+      return NextResponse.json(
+        { error: `Weather API error: ${forecastRes.status}` },
+        { status: forecastRes.status }
+      )
     }
 
     const currentData = await currentRes.json()
     const forecastData = await forecastRes.json()
+
+    console.log("Weather data fetched successfully for:", currentData.name)
 
     const dailyForecasts: any[] = []
     const seenDates = new Set<string>()

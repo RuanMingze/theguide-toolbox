@@ -218,6 +218,34 @@ const sites: Site[] = [
   { name: "Fly.io", url: "https://fly.io", description: "边缘计算平台", category: "云服务" },
   { name: "Cloudflare Pages", url: "https://pages.cloudflare.com", description: "边缘网站托管", category: "云服务" },
   { name: "GitHub Pages", url: "https://pages.github.com", description: "静态网站托管", category: "云服务" },
+  
+  // 数据库与后端 (5)
+  { name: "MongoDB Atlas", url: "https://mongodb.com/cloud/atlas", description: "云数据库服务", category: "数据库与后端" },
+  { name: "Redis Cloud", url: "https://redis.com/cloud", description: "云缓存服务", category: "数据库与后端" },
+  { name: "Firebase", url: "https://firebase.google.com", description: "Google 移动开发平台", category: "数据库与后端" },
+  { name: "Appwrite", url: "https://appwrite.io", description: "开源后端服务器", category: "数据库与后端" },
+  { name: "PocketBase", url: "https://pocketbase.io", description: "轻量级后端解决方案", category: "数据库与后端" },
+  
+  // 测试与监控 (5)
+  { name: "Postman", url: "https://postman.com", description: "API 开发与测试", category: "测试与监控" },
+  { name: "Sentry", url: "https://sentry.io", description: "应用错误监控", category: "测试与监控" },
+  { name: "LogRocket", url: "https://logrocket.com", description: "前端监控与回放", category: "测试与监控" },
+  { name: "Uptime Robot", url: "https://uptimerobot.com", description: "网站监控服务", category: "测试与监控" },
+  { name: "Pingdom", url: "https://pingdom.com", description: "网站性能监控", category: "测试与监控" },
+  
+  // 文档与协作 (5)
+  { name: "GitBook", url: "https://gitbook.com", description: "文档编写平台", category: "文档与协作" },
+  { name: "Docusaurus", url: "https://docusaurus.io", description: "文档网站生成器", category: "文档与协作" },
+  { name: "Miro", url: "https://miro.com", description: "在线协作白板", category: "文档与协作" },
+  { name: "Figma Jam", url: "https://figma.com/jam", description: "协作头脑风暴", category: "文档与协作" },
+  { name: "Whimsical", url: "https://whimsical.com", description: "视觉协作工具", category: "文档与协作" },
+  
+  // 多媒体工具 (5)
+  { name: "Loom", url: "https://loom.com", description: "屏幕录制与分享", category: "多媒体工具" },
+  { name: "OBS Studio", url: "https://obsproject.com", description: "开源直播录制", category: "多媒体工具" },
+  { name: "Audacity", url: "https://audacityteam.org", description: "音频编辑软件", category: "多媒体工具" },
+  { name: "HandBrake", url: "https://handbrake.fr", description: "视频转码工具", category: "多媒体工具" },
+  { name: "GIMP", url: "https://gimp.org", description: "开源图像编辑", category: "多媒体工具" },
 ]
 
 const categories = Array.from(new Set(sites.map(site => site.category)))
@@ -259,6 +287,14 @@ const categoryTranslations: Record<string, string> = {
   "工具": "Tools",
   "社区": "Community",
   "其他": "Others",
+  "域名与 CDN": "Domain & CDN",
+  "前端框架": "Frontend Frameworks",
+  "AI 工具": "AI Tools",
+  "效率工具": "Productivity Tools",
+  "数据库与后端": "Database & Backend",
+  "测试与监控": "Testing & Monitoring",
+  "文档与协作": "Documentation & Collaboration",
+  "多媒体工具": "Multimedia Tools",
 }
 
 export default function GuidePage() {
@@ -357,7 +393,6 @@ export default function GuidePage() {
                     <SiteCard key={site.url} site={site} isFav={isFav} onToggleFavorite={() => {
                       toggleFavorite({
                         type: 'website',
-                        id: site.url,
                         name: site.name,
                         url: site.url,
                         description: site.description,

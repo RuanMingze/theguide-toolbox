@@ -1,6 +1,6 @@
 {
   "name": "theguide-toolbox",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -47,8 +47,10 @@
     "date-fns": "4.1.0",
     "embla-carousel-react": "8.6.0",
     "file-type": "^21.3.3",
+    "geoip0": "^0.0.12",
     "input-otp": "1.4.2",
     "jszip": "^3.10.1",
+    "liquid-glass-react": "^1.1.1",
     "lucide-react": "^0.564.0",
     "mammoth": "^1.12.0",
     "next": "16.2.0",

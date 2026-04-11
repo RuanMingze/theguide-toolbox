@@ -21,78 +21,81 @@ const LIQUID_GLASS_SVG = `
 export function useSettings() {
   const applySettings = () => {
     const savedSettings = localStorage.getItem('theguide-settings')
-    if (savedSettings) {
-      const settings = JSON.parse(savedSettings)
+    const root = document.documentElement
+    const body = document.body
+    
+    console.log('[useSettings] applySettings called')
+    console.log('[useSettings] savedSettings:', savedSettings ? 'exists' : 'null')
+    
+    // 如果没有保存的设置，使用默认壁纸
+    const defaultWallpaper = "url('https://luckycola.com.cn/public/imgs/luckycola_Imghub_forever_5Z1Q1XpG17752164264304110.jpg')"
+    const wallpaperToApply = savedSettings ? JSON.parse(savedSettings).wallpaper : defaultWallpaper
+    
+    console.log('[useSettings] wallpaperToApply:', wallpaperToApply)
+    console.log('[useSettings] Before apply - CSS variable:', root.style.getPropertyValue('--custom-wallpaper'))
+    console.log('[useSettings] Before apply - body computed style:', getComputedStyle(body).backgroundImage)
+    
+    // 应用壁纸 - 使用 CSS 变量
+    if (wallpaperToApply) {
+      root.style.setProperty('--custom-wallpaper', wallpaperToApply)
+      console.log('[useSettings] Wallpaper applied:', wallpaperToApply)
+    } else {
+      root.style.removeProperty('--custom-wallpaper')
+      console.log('[useSettings] Wallpaper removed')
+    }
+    
+    console.log('[useSettings] After apply - CSS variable:', root.style.getPropertyValue('--custom-wallpaper'))
+    console.log('[useSettings] After apply - body computed style:', getComputedStyle(body).backgroundImage)
+    
+    // 应用液体玻璃效果（优先于毛玻璃）
+    const settings = savedSettings ? JSON.parse(savedSettings) : null
+    
+    if (settings?.liquidGlassEffect) {
+      // 启用液体玻璃时，添加 class
+      body.classList.add('liquid-glass-enabled')
+      body.classList.remove('glass-enabled')
       
-      // 应用壁纸
-      const body = document.body
-      if (settings.wallpaper) {
-        body.style.setProperty('background-image', settings.wallpaper, 'important')
-        body.style.setProperty('background-size', 'cover', 'important')
-        body.style.setProperty('background-position', 'center', 'important')
-        body.style.setProperty('background-attachment', 'fixed', 'important')
-        body.style.setProperty('background-color', 'transparent', 'important')
-        console.log('[useSettings] Wallpaper applied:', settings.wallpaper.substring(0, 50) + '...')
-      } else {
-        body.style.removeProperty('background-image')
-        body.style.removeProperty('background-size')
-        body.style.removeProperty('background-position')
-        body.style.removeProperty('background-attachment')
-        body.style.removeProperty('background-color')
-        // 确保有默认的深色背景
-        body.style.backgroundColor = 'var(--background)'
+      // 移除 SVG 滤镜容器（不再使用）
+      const svgContainer = document.getElementById('liquid-glass-svg-container')
+      if (svgContainer) {
+        svgContainer.remove()
       }
       
-      // 应用液体玻璃效果（优先于毛玻璃）
-      const root = document.documentElement
-      if (settings.liquidGlassEffect) {
-        // 启用液体玻璃时，添加 class
-        body.classList.add('liquid-glass-enabled')
-        body.classList.remove('glass-enabled')
-        
-        // 移除 SVG 滤镜容器（不再使用）
-        const svgContainer = document.getElementById('liquid-glass-svg-container')
-        if (svgContainer) {
-          svgContainer.remove()
-        }
-        
-        // 应用液体玻璃参数
-        root.style.setProperty('--lg-blur', `${settings.liquidBlur ?? 50}px`)
-        root.style.setProperty('--lg-refraction', `${settings.liquidRefraction ?? 200}%`)
-        
-        // 移除毛玻璃变量
+      // 应用液体玻璃参数
+      root.style.setProperty('--lg-blur', `${settings.liquidBlur ?? 50}px`)
+      root.style.setProperty('--lg-refraction', `${settings.liquidRefraction ?? 200}%`)
+      
+      // 移除毛玻璃变量
+      root.style.removeProperty('--glass-bg')
+      root.style.removeProperty('--glass-blur')
+    } else {
+      // 禁用液体玻璃
+      body.classList.remove('liquid-glass-enabled')
+      const svgContainer = document.getElementById('liquid-glass-svg-container')
+      if (svgContainer) {
+        svgContainer.remove()
+      }
+      
+      // 应用毛玻璃效果
+      if (settings?.glassEffect !== false) {
+        root.style.setProperty('--glass-bg', `rgba(${settings?.glassColor || '255, 255, 255'}, ${settings?.glassOpacity || 10} / 100)`)
+        root.style.setProperty('--glass-blur', '20px')
+      } else {
         root.style.removeProperty('--glass-bg')
         root.style.removeProperty('--glass-blur')
-      } else {
-        // 禁用液体玻璃
-        body.classList.remove('liquid-glass-enabled')
-        const svgContainer = document.getElementById('liquid-glass-svg-container')
-        if (svgContainer) {
-          svgContainer.remove()
-        }
-        
-        // 应用毛玻璃效果
-        if (settings.glassEffect) {
-          root.style.setProperty('--glass-bg', `rgba(${settings.glassColor || '255, 255, 255'}, ${settings.glassOpacity / 100})`)
-          root.style.setProperty('--glass-blur', '20px')
-        } else {
-          root.style.removeProperty('--glass-bg')
-          root.style.removeProperty('--glass-blur')
-        }
       }
-    } else {
-      // 没有保存的设置时，确保有默认背景
-      document.body.style.backgroundColor = 'var(--background)'
     }
   }
 
   useEffect(() => {
+    console.log('[useSettings] useEffect initialized')
     // 初始应用设置
     applySettings()
     
     // 监听 storage 变化（跨标签页）
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'theguide-settings') {
+        console.log('[useSettings] storage changed, reapplying settings')
         applySettings()
       }
     }

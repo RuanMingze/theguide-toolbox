@@ -17,15 +17,19 @@ import {
   MapPin,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Compass,
   Wrench,
   ArrowRight,
   User,
   Heart,
-  X
+  X,
+  ClipboardList
 } from "lucide-react"
 import Link from "next/link"
 import { festivalTranslations } from "@/lib/translations"
+import { TodoList } from "@/components/todo-list"
+import { getWeatherCache, setWeatherCache, isCacheValid } from "@/lib/weather-cache"
 
 // 中文节日数据库
 const chineseFestivals: Record<string, { name: string; description: string }> = {
@@ -59,52 +63,116 @@ const chineseLunarFestivals: Record<string, { name: string; description: string 
   "12-30": { name: "除夕", description: "除夕，为岁末的最后一天夜晚。岁末的最后一天称为'岁除'，意为旧岁至此而除，另换新岁。除，即去除之意；夕，指夜晚。'除夕'是岁除之夜的意思，又称大年夜、除夕夜、除夜等，时值年尾的最后一个晚上。" },
 }
 
-// 简单的农历转换（近似算法）
-function getLunarDate(date: Date): { month: number; day: number } {
-  // 这里使用一个简化的农历计算
-  // 实际项目中应该使用更精确的农历库
-  const baseDate = new Date(1900, 0, 31) // 1900 年 1 月 31 日是农历正月初一
-  const diff = date.getTime() - baseDate.getTime()
-  const lunarDays = Math.floor(diff / (1000 * 60 * 60 * 24))
+// 农历转换数据（1900-2100 年）
+const lunarInfo = [
+  0x04bd8, 0x04ae0, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0, 0x09ad0, 0x055d2,
+  0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540, 0x0d6a0, 0x0ada2, 0x095b0, 0x14977,
+  0x04970, 0x0a4b0, 0x0b4b5, 0x06a50, 0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970,
+  0x06566, 0x0d4a0, 0x0ea50, 0x06e95, 0x05ad0, 0x02b60, 0x186e3, 0x092e0, 0x1c8d7, 0x0c950,
+  0x0d4a0, 0x1d8a6, 0x0b550, 0x056a0, 0x1a5b4, 0x025d0, 0x092d0, 0x0d2b2, 0x0a950, 0x0b557,
+  0x06ca0, 0x0b550, 0x15355, 0x04da0, 0x0a5b0, 0x14573, 0x052b0, 0x0a9a8, 0x0e950, 0x06aa0,
+  0x0aea6, 0x0ab50, 0x04b60, 0x0aae4, 0x0a570, 0x05260, 0x0f263, 0x0d950, 0x05b57, 0x056a0,
+  0x096d0, 0x04dd5, 0x04ad0, 0x0a4d0, 0x0d4d4, 0x0d250, 0x0d558, 0x0b540, 0x0b6a0, 0x195a6,
+  0x095b0, 0x049b0, 0x0a974, 0x0a4b0, 0x0b27a, 0x06a50, 0x06d40, 0x0af46, 0x0ab60, 0x09570,
+  0x04af5, 0x04970, 0x064b0, 0x074a3, 0x0ea50, 0x06b58, 0x055c0, 0x0ab60, 0x096d5, 0x092e0,
+  0x0c960, 0x0d954, 0x0d4a0, 0x0da50, 0x07552, 0x056a0, 0x0abb7, 0x025d0, 0x092d0, 0x0cab5,
+  0x0a950, 0x0b4a0, 0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, 0x15176, 0x052b0, 0x0a930,
+  0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, 0x0d260, 0x0ea65, 0x0d530,
+  0x05aa0, 0x076a3, 0x096d0, 0x04afb, 0x04ad0, 0x0a4d0, 0x1d0b6, 0x0d250, 0x0d520, 0x0dd45,
+  0x0b5a0, 0x056d0, 0x055b2, 0x049b0, 0x0a577, 0x0a4b0, 0x0aa50, 0x1b255, 0x06d20, 0x0ada0,
+  0x14b63, 0x09370, 0x049f8, 0x04970, 0x064b0, 0x168a6, 0x0ea50, 0x06b20, 0x1a6c4, 0x0aae0,
+  0x0a2e0, 0x0d2e3, 0x0c960, 0x0d557, 0x0d4a0, 0x0da50, 0x05d55, 0x056a0, 0x0a6d0, 0x055d4,
+  0x052d0, 0x0a9b8, 0x0a950, 0x0b4a0, 0x0b6a6, 0x0ad50, 0x055a0, 0x0aba4, 0x0a5b0, 0x052b0,
+  0x0b273, 0x06930, 0x07337, 0x06aa0, 0x0ad50, 0x14b55, 0x04b60, 0x0a570, 0x054e4, 0x0d160,
+  0x0e968, 0x0d520, 0x0daa0, 0x16aa6, 0x056d0, 0x04ae0, 0x0a9d4, 0x0a2d0, 0x0d150, 0x0f252,
+  0x0d520
+]
+
+// 农历月份天数
+function getLunarMonthDays(year: number, month: number): number {
+  return (lunarInfo[year - 1900] & (0x10000 >> month)) ? 30 : 29
+}
+
+// 农历年闰月
+function getLunarLeapMonth(year: number): number {
+  return lunarInfo[year - 1900] & 0xf
+}
+
+// 农历年闰月天数
+function getLunarLeapDays(year: number): number {
+  if (getLunarLeapMonth(year)) {
+    return (lunarInfo[year - 1900] & 0x10000) ? 30 : 29
+  }
+  return 0
+}
+
+// 农历年总天数
+function getLunarYearDays(year: number): number {
+  let sum = 348
+  for (let i = 0x8000; i > 0x8; i >>= 1) {
+    sum += (lunarInfo[year - 1900] & i) ? 1 : 0
+  }
+  return sum + getLunarLeapDays(year)
+}
+
+// 获取农历日期
+function getLunarDate(date: Date): { year: number; month: number; day: number } {
+  let offset = 0
+  const baseDate = new Date(1900, 0, 31)
+  offset = Math.floor((date.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24))
   
-  // 简化处理，只计算月和日
-  let remainingDays = lunarDays
   let year = 1900
+  let temp = 0
+  
+  // 计算农历年份
+  for (year = 1900; year < 2101 && offset > 0; year++) {
+    temp = getLunarYearDays(year)
+    offset -= temp
+  }
+  year--
+  offset += temp
+  
+  // 计算农历月份
   let month = 1
-  let day = 1
+  let leapMonth = getLunarLeapMonth(year)
+  let isLeap = false
   
-  while (remainingDays > 0) {
-    const daysInYear = getLunarDaysInYear(year)
-    if (remainingDays >= daysInYear) {
-      remainingDays -= daysInYear
-      year++
+  for (month = 1; month < 13 && offset > 0; month++) {
+    // 闰月
+    if (leapMonth > 0 && month === (leapMonth + 1) && !isLeap) {
+      --month
+      isLeap = true
+      temp = getLunarLeapDays(year)
     } else {
-      break
+      temp = getLunarMonthDays(year, month)
+    }
+    
+    // 解除闰月
+    if (isLeap && month === (leapMonth + 1)) {
+      isLeap = false
+    }
+    
+    offset -= temp
+  }
+  
+  // 解除闰月
+  if (offset === 0 && leapMonth > 0 && month === leapMonth + 1) {
+    if (isLeap) {
+      isLeap = false
+    } else {
+      isLeap = true
+      --month
     }
   }
   
-  while (remainingDays > 0) {
-    const daysInMonth = getLunarDaysInMonth(year, month)
-    if (remainingDays >= daysInMonth) {
-      remainingDays -= daysInMonth
-      month++
-    } else {
-      day = remainingDays + 1
-      break
-    }
+  if (offset < 0) {
+    offset += temp
+    --month
   }
   
-  return { month, day }
-}
-
-function getLunarDaysInYear(year: number): number {
-  // 简化：农历一年大约 354 或 384 天（闰年）
-  return 354 + (year % 3 === 0 ? 30 : 0)
-}
-
-function getLunarDaysInMonth(year: number, month: number): number {
-  // 简化：农历月份 29 或 30 天
-  return 29 + ((year + month) % 2)
+  const day = offset + 1
+  
+  return { year, month, day }
 }
 
 // 日历组件
@@ -233,10 +301,13 @@ function Calendar({ lang }: { lang: string }) {
 }
 
 // 天气组件
-function Weather({ lang }: { lang: string }) {
+function Weather({ lang, userLocation }: { lang: string; userLocation: string | null }) {
   const [isMounted, setIsMounted] = useState(false)
   const [location, setLocation] = useState<string | null>(null)
   const [weatherLang, setWeatherLang] = useState(lang)
+  const [showCitySelector, setShowCitySelector] = useState(false)
+  const [selectedCity, setSelectedCity] = useState<string>('')
+  const [customCityInput, setCustomCityInput] = useState('')
   const [weather, setWeather] = useState({
     temp: 22,
     condition: "晴",
@@ -254,7 +325,23 @@ function Weather({ lang }: { lang: string }) {
     error: null as string | null
   })
 
+  // 热门城市列表
+  const popularCities = [
+    { name: '北京', nameEn: 'Beijing', lat: 39.9042, lon: 116.4074 },
+    { name: '上海', nameEn: 'Shanghai', lat: 31.2304, lon: 121.4737 },
+    { name: '广州', nameEn: 'Guangzhou', lat: 23.1291, lon: 113.2644 },
+    { name: '深圳', nameEn: 'Shenzhen', lat: 22.5431, lon: 114.0579 },
+    { name: '杭州', nameEn: 'Hangzhou', lat: 30.2741, lon: 120.1551 },
+    { name: '成都', nameEn: 'Chengdu', lat: 30.5728, lon: 104.0668 },
+    { name: '重庆', nameEn: 'Chongqing', lat: 29.4316, lon: 106.9123 },
+    { name: '武汉', nameEn: 'Wuhan', lat: 30.5928, lon: 114.3055 },
+    { name: '西安', nameEn: "Xi'an", lat: 34.3416, lon: 108.9398 },
+    { name: '南京', nameEn: 'Nanjing', lat: 32.0603, lon: 118.7969 },
+  ]
+
   useEffect(() => {
+    setIsMounted(true)
+    
     // 从 Cookie 读取语言设置
     const cookieLang = document.cookie
       .split('; ')
@@ -266,51 +353,124 @@ function Weather({ lang }: { lang: string }) {
   }, [])
 
   useEffect(() => {
-    setIsMounted(true)
+    if (!isMounted) return
     
-    // 设置超时，防止地理位置获取卡住
-    const timeoutId = setTimeout(() => {
-      console.warn("Geolocation timeout, using default location")
-      setLocation("Deqing")
-    }, 5000) // 5 秒超时
-    
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          clearTimeout(timeoutId)
-          const { latitude, longitude } = position.coords
-          setLocation(`${latitude},${longitude}`)
-        },
-        (error) => {
-          clearTimeout(timeoutId)
-          console.error("Geolocation error:", error)
-          setLocation("Beijing")
-        },
-        {
-          timeout: 4000,
-          maximumAge: 300000 // 5 分钟内的缓存位置可以使用
-        }
-      )
-    } else {
-      clearTimeout(timeoutId)
-      setLocation("Beijing")
+    // 如果提供了用户位置，直接使用
+    if (userLocation) {
+      console.log("Using user-set location:", userLocation)
+      setLocation(userLocation)
+      return
     }
     
-    // 清理函数
-    return () => clearTimeout(timeoutId)
-  }, [])
+    // 检查是否有保存的位置偏好
+    const savedLocation = localStorage.getItem('theguide-weather-location')
+    if (savedLocation) {
+      console.log("Using saved location:", savedLocation)
+      setLocation(savedLocation)
+      return
+    }
+    
+    // 否则使用 ip-api.com 获取位置
+    const fetchLocation = async () => {
+      try {
+        const res = await fetch('http://ip-api.com/json/?lang=zh-CN')
+        if (!res.ok) {
+          throw new Error("Failed to fetch location from ip-api")
+        }
+        const data = await res.json()
+        if (data.status === 'success') {
+          // 使用经纬度坐标，更准确
+          const location = `${data.lat},${data.lon}`
+          console.log("Location from ip-api:", location)
+          setLocation(location)
+        } else {
+          console.error("ip-api returned error:", data)
+          setLocation('Beijing')
+        }
+      } catch (error) {
+        console.error("Location fetch error:", error)
+        setLocation('Beijing')
+      }
+    }
+    
+    fetchLocation()
+  }, [isMounted, userLocation])
 
   useEffect(() => {
     if (!location) return
     
     const fetchWeather = async () => {
       try {
+        // 先尝试从 IndexedDB 获取缓存
+        const cached = await getWeatherCache(location)
+        if (cached && isCacheValid(cached.timestamp, 60 * 60 * 1000)) {
+          // 缓存有效（1 小时内），直接使用
+          const data = cached.data
+          const weatherConditionMap: Record<string, string> = {
+            Clear: "晴",
+            Clouds: "多云",
+            Rain: "小雨",
+            Drizzle: "小雨",
+            Thunderstorm: "雷暴",
+            Snow: "雪",
+            Mist: "雾",
+            Fog: "雾"
+          }
+
+          const weatherConditionMapEn: Record<string, string> = {
+            Clear: "Sunny",
+            Clouds: "Cloudy",
+            Rain: "Rainy",
+            Drizzle: "Drizzly",
+            Thunderstorm: "Stormy",
+            Snow: "Snowy",
+            Mist: "Misty",
+            Fog: "Foggy"
+          }
+
+          const condition = weatherLang === 'en' 
+            ? (weatherConditionMapEn[data.current.weather] || "Cloudy")
+            : (weatherConditionMap[data.current.weather] || "多云")
+
+          const forecast = data.forecast.slice(0, 3).map((item: any, index: number) => {
+            const days = weatherLang === 'en'
+              ? ["Today", "Tomorrow", "Day after", "Day 4", "Day 5"]
+              : ["今天", "明天", "后天", "大后天", "第五天"]
+            return {
+              day: days[index] || (weatherLang === 'en' ? "Unknown" : "未知"),
+              temp: item.temp,
+              condition: weatherLang === 'en'
+                ? (weatherConditionMapEn[item.weather] || "Cloudy")
+                : (weatherConditionMap[item.weather] || "多云")
+            }
+          })
+
+          setWeather({
+            temp: data.current.temp,
+            condition,
+            humidity: data.current.humidity,
+            wind: data.current.wind,
+            location: data.location,
+            high: data.current.high,
+            low: data.current.low,
+            forecast,
+            loading: false,
+            error: null
+          })
+          console.log('Using cached weather data')
+          return
+        }
+
+        // 缓存无效或不存在，请求新数据
         const res = await fetch(`/api/weather?location=${encodeURIComponent(location)}`)
         if (!res.ok) {
           throw new Error("Failed to fetch weather data")
         }
 
         const data = await res.json()
+
+        // 保存到 IndexedDB
+        await setWeatherCache(location, data)
 
         const weatherConditionMap: Record<string, string> = {
           Clear: "晴",
@@ -396,6 +556,28 @@ function Weather({ lang }: { lang: string }) {
     }
   }
 
+  const handleCitySelect = (cityLat: number, cityLon: number, cityName: string) => {
+    const location = `${cityLat},${cityLon}`
+    setLocation(location)
+    setSelectedCity(cityName)
+    setShowCitySelector(false)
+    // 保存到 localStorage
+    localStorage.setItem('theguide-weather-location', location)
+    console.log("Selected city:", cityName, location)
+  }
+
+  const handleCustomCitySubmit = () => {
+    if (customCityInput.trim()) {
+      setLocation(customCityInput.trim())
+      setSelectedCity(customCityInput.trim())
+      setShowCitySelector(false)
+      setCustomCityInput('')
+      // 保存到 localStorage
+      localStorage.setItem('theguide-weather-location', customCityInput.trim())
+      console.log("Custom city:", customCityInput)
+    }
+  }
+
   if (!isMounted) {
     return (
       <div className="rounded-2xl bg-card p-6 shadow-sm border border-border">
@@ -408,9 +590,64 @@ function Weather({ lang }: { lang: string }) {
 
   return (
     <div className="rounded-2xl bg-card p-6 shadow-sm border border-border">
-      <div className="mb-4 flex items-center gap-2 text-muted-foreground">
-        <MapPin className="h-4 w-4" />
-        <span className="text-sm">{weather.location}</span>
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <MapPin className="h-4 w-4" />
+          <span className="text-sm">{weather.location}</span>
+        </div>
+        
+        {/* 城市选择下拉框 */}
+        <div className="relative">
+          <button
+            onClick={() => setShowCitySelector(!showCitySelector)}
+            className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            <span>{lang === 'en' ? 'Change City' : '切换城市'}</span>
+            <ChevronDown className={`h-3 w-3 transition-transform ${showCitySelector ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {showCitySelector && (
+            <div className="absolute right-0 top-full z-50 mt-1 w-72 rounded-lg border border-border bg-card shadow-lg">
+              <div className="px-3 py-2 text-xs font-medium text-muted-foreground border-b border-border">
+                {lang === 'en' ? 'Popular Cities' : '热门城市'}
+              </div>
+              <div className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
+                {popularCities.map((city) => (
+                  <button
+                    key={city.nameEn}
+                    onClick={() => handleCitySelect(city.lat, city.lon, lang === 'en' ? city.nameEn : city.name)}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-secondary"
+                  >
+                    {lang === 'en' ? city.nameEn : city.name}
+                  </button>
+                ))}
+              </div>
+              
+              {/* 自定义城市输入 */}
+              <div className="border-t border-border p-3">
+                <div className="text-xs font-medium text-muted-foreground mb-2">
+                  {lang === 'en' ? 'Or enter city name' : '或输入城市名'}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={customCityInput}
+                    onChange={(e) => setCustomCityInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCustomCitySubmit()}
+                    placeholder={lang === 'en' ? 'e.g., London' : '例如：London'}
+                    className="flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                  />
+                  <button
+                    onClick={handleCustomCitySubmit}
+                    className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  >
+                    {lang === 'en' ? 'OK' : '确定'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       
       <div className="flex items-center justify-between">
@@ -512,12 +749,77 @@ export default function HomePage() {
   const [todayFestival, setTodayFestival] = useState<{name: string; description: string} | null>(null)
   const [showNotification, setShowNotification] = useState(false)
   const [greeting, setGreeting] = useState<string>('欢迎回来')
+  const [userLocation, setUserLocation] = useState<string | null>(null)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+  const [visibleComponents, setVisibleComponents] = useState<Record<string, boolean>>({
+    timeDisplay: true,
+    calendar: true,
+    todoList: true,
+    weather: true,
+    quickAccess: true,
+    greeting: true,
+  })
   
   // 翻译 Hook
   const { lang, t, loading: translationLoading } = useTranslation()
   
   // 应用全局设置
   useSettings()
+
+  useEffect(() => {
+    setIsMounted(true)
+    // 加载用户位置
+    const savedLocation = localStorage.getItem('theguide-location')
+    if (savedLocation) {
+      setUserLocation(savedLocation)
+    }
+    
+    // 加载组件可见性设置
+    const savedComponents = localStorage.getItem('theguide-visible-components')
+    if (savedComponents) {
+      setVisibleComponents(JSON.parse(savedComponents))
+    }
+  }, [])
+
+  useEffect(() => {
+    // 监控壁纸变化
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+          const root = document.documentElement
+          const wallpaper = root.style.getPropertyValue('--custom-wallpaper')
+          console.log('[MutationObserver] Wallpaper changed:', wallpaper)
+        }
+      })
+    })
+    
+    const root = document.documentElement
+    observer.observe(root, { attributes: true, attributeFilter: ['style'] })
+    
+    // 定期检查 computed style
+    const interval = setInterval(() => {
+      const body = document.body
+      const computedStyle = getComputedStyle(body)
+      console.log('[Interval] ===== 壁纸检查 =====')
+      console.log('[Interval] Computed background-image:', computedStyle.backgroundImage)
+      console.log('[Interval] Computed background-color:', computedStyle.backgroundColor)
+      console.log('[Interval] CSS variable --custom-wallpaper:', root.style.getPropertyValue('--custom-wallpaper'))
+      console.log('[Interval] CSS variable --background:', getComputedStyle(root).getPropertyValue('--background'))
+      console.log('[Interval] body.style.backgroundImage:', body.style.backgroundImage)
+      console.log('[Interval] body.style.backgroundColor:', body.style.backgroundColor)
+    }, 1000)
+    
+    return () => {
+      observer.disconnect()
+      clearInterval(interval)
+    }
+  }, [])
+
+  useEffect(() => {
+    // 保存组件可见性设置
+    localStorage.setItem('theguide-visible-components', JSON.stringify(visibleComponents))
+  }, [visibleComponents])
 
   useEffect(() => {
     // 加载设置
@@ -588,9 +890,108 @@ export default function HomePage() {
     setShowNotification(false)
   }
 
+  const toggleComponent = (component: string) => {
+    setVisibleComponents(prev => ({
+      ...prev,
+      [component]: !prev[component]
+    }))
+  }
+
+  const resetComponents = () => {
+    setVisibleComponents({
+      timeDisplay: true,
+      calendar: true,
+      todoList: true,
+      weather: true,
+      quickAccess: true,
+      greeting: true,
+    })
+    setIsEditMode(false)
+  }
+
   return (
     <div className="min-h-screen bg-transparent">
       <Navbar />
+      
+      {/* 编辑模式按钮 */}
+      {isMounted && (
+        <>
+          <div className="fixed right-4 top-20 z-40">
+            <button
+              onClick={() => setIsEditMode(!isEditMode)}
+              className={`rounded-full p-3 shadow-lg transition-all ${
+                isEditMode
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card text-foreground hover:bg-secondary'
+              }`}
+              title={isEditMode ? '完成编辑' : '编辑布局'}
+            >
+              {isEditMode ? (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              )}
+            </button>
+          </div>
+          
+          {/* 编辑模式提示和组件管理面板 */}
+          {isEditMode && (
+            <div className="fixed left-4 top-20 z-40 flex flex-col gap-2">
+              <div className="flex items-center gap-2 rounded-lg bg-card px-4 py-2 shadow-lg">
+                <span className="text-sm font-medium text-foreground">{lang === 'en' ? 'Edit Mode' : '编辑模式'}</span>
+                <button
+                  onClick={resetComponents}
+                  className="text-xs text-primary hover:text-primary/80"
+                >
+                  {lang === 'en' ? 'Reset All' : '重置全部'}
+                </button>
+              </div>
+              
+              {/* 隐藏的组件列表 */}
+              <div className="rounded-lg bg-card p-3 shadow-lg">
+                <h4 className="mb-2 text-xs font-medium text-muted-foreground">
+                  {lang === 'en' ? 'Hidden Components' : '隐藏的组件'}
+                </h4>
+                <div className="flex flex-col gap-2">
+                  {Object.entries(visibleComponents).map(([key, visible]) => {
+                    if (visible) return null
+                    const componentNames: Record<string, {zh: string, en: string}> = {
+                      greeting: { zh: '欢迎语', en: 'Greeting' },
+                      timeDisplay: { zh: '时钟', en: 'Clock' },
+                      calendar: { zh: '日历', en: 'Calendar' },
+                      todoList: { zh: '待办', en: 'Todo' },
+                      weather: { zh: '天气', en: 'Weather' },
+                      quickAccess: { zh: '快捷链接', en: 'Quick Links' },
+                    }
+                    const name = componentNames[key]?.[lang === 'en' ? 'en' : 'zh'] || key
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => toggleComponent(key)}
+                        className="flex items-center justify-between rounded-md bg-secondary px-3 py-1.5 text-sm text-foreground hover:bg-secondary/80"
+                      >
+                        <span>{name}</span>
+                        <svg className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                      </button>
+                    )
+                  })}
+                  {Object.values(visibleComponents).every(v => v) && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      {lang === 'en' ? 'All components visible' : '所有组件已显示'}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
       
       {/* 节日通知条 */}
       {showNotification && todayFestival && (
@@ -615,80 +1016,145 @@ export default function HomePage() {
           </div>
         </div>
       )}
-      
+
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Hero Section */}
-        <div className="mb-8 text-center">
-          {!isLoading && isAuthenticated && user ? (
-            <div className="flex flex-col items-center gap-4">
-              <div className="flex items-center gap-3">
-                {user.avatar_url ? (
-                  <img
-                    src={user.avatar_url}
-                    alt={user.name}
-                    className="h-12 w-12 rounded-full border-2 border-primary"
-                  />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary">
-                    <User className="h-6 w-6 text-primary-foreground" />
-                  </div>
-                )}
+        {visibleComponents.greeting && (
+          <div className="mb-8 text-center relative group">
+            {isEditMode && (
+              <button
+                onClick={() => toggleComponent('greeting')}
+                className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+            {!isLoading && isAuthenticated && user ? (
+              <div className="flex flex-col items-center gap-4">
+                <div className="flex items-center gap-3">
+                  {user.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.name}
+                      className="h-12 w-12 rounded-full border-2 border-primary"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary">
+                      <User className="h-6 w-6 text-primary-foreground" />
+                    </div>
+                  )}
+                  <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                    {t(greeting)}，<span className="text-primary">{user.name}</span>
+                  </h1>
+                </div>
+              </div>
+            ) : (
+              <div>
                 <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                  {t(greeting)}，<span className="text-primary">{user.name}</span>
+                  {t('欢迎使用')} <span className="text-primary">TheGuide</span> {t('工具箱')}
                 </h1>
               </div>
-            </div>
-          ) : (
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                {t('欢迎使用')} <span className="text-primary">TheGuide</span> {t('工具箱')}
-              </h1>
+            )}
+          </div>
+        )}
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+          {/* 左侧列：时钟、天气、待办 */}
+          <div className={`flex flex-col gap-6 ${!visibleComponents.calendar ? 'col-span-2 justify-self-center w-full max-w-[calc(100%-320px)]' : ''}`}>
+            {visibleComponents.timeDisplay && (
+              <div className="relative group">
+                {isEditMode && (
+                  <button
+                    onClick={() => toggleComponent('timeDisplay')}
+                    className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+                <TimeDisplay />
+              </div>
+            )}
+
+            {visibleComponents.weather && (
+              <div className="relative group">
+                {isEditMode && (
+                  <button
+                    onClick={() => toggleComponent('weather')}
+                    className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+                <Weather lang={lang} userLocation={userLocation} />
+              </div>
+            )}
+
+            {visibleComponents.todoList && (
+              <div className="relative group">
+                {isEditMode && (
+                  <button
+                    onClick={() => toggleComponent('todoList')}
+                    className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+                <TodoList lang={lang} />
+              </div>
+            )}
+          </div>
+
+          {/* 右侧列：日历 */}
+          {visibleComponents.calendar && (
+            <div className="relative group">
+              {isEditMode && (
+                <button
+                  onClick={() => toggleComponent('calendar')}
+                  className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+              <Calendar lang={lang} />
             </div>
           )}
         </div>
 
-        {/* Main Grid */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Time Display - Full Width on Mobile, 2 cols on Desktop */}
-          <div className="lg:col-span-2">
-            <TimeDisplay />
-          </div>
-
-          {/* Calendar */}
-          <div className="lg:row-span-2">
-            <Calendar lang={lang} />
-          </div>
-
-          {/* Weather */}
-          <div className="lg:col-span-2">
-            <Weather lang={lang} />
-          </div>
-        </div>
-
         {/* Quick Access */}
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <QuickAccessCard
-            href="/guide"
-            icon={Compass}
-            title={t('网站导航')}
-            description={t('精选 100+ 优质网站，快速访问')}
-            gradient="bg-primary"
-          />
-          <QuickAccessCard
-            href="/tools"
-            icon={Wrench}
-            title={t('实用工具')}
-            description={t('30+ 在线工具，提升效率')}
-            gradient="bg-accent"
-          />
-          <QuickAccessCard
-            href="/favorites"
-            icon={Heart}
-            title={t('我的收藏')}
-            description={t('快速访问收藏的工具和网站')}
-            gradient="bg-red-500"
-          />
-        </div>
+        {visibleComponents.quickAccess && (
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 relative group">
+            {isEditMode && (
+              <button
+                onClick={() => toggleComponent('quickAccess')}
+                className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+            <QuickAccessCard
+              href="/guide"
+              icon={Compass}
+              title={t('网站导航')}
+              description={t('精选 100+ 优质网站，快速访问')}
+              gradient="bg-primary"
+            />
+            <QuickAccessCard
+              href="/tools"
+              icon={Wrench}
+              title={t('实用工具')}
+              description={t('40+ 在线工具，提升效率')}
+              gradient="bg-accent"
+            />
+            <QuickAccessCard
+              href="/favorites"
+              icon={Heart}
+              title={t('我的收藏')}
+              description={t('快速访问收藏的工具和网站')}
+              gradient="bg-red-500"
+            />
+          </div>
+        )}
       </main>
     </div>
   )

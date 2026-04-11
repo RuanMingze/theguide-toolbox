@@ -39,7 +39,8 @@ import {
   Check,
   Upload,
   ArrowLeftRight,
-  Heart
+  Heart,
+  Shield
 } from "lucide-react"
 
 interface Tool {
@@ -93,13 +94,35 @@ const tools: Tool[] = [
   { id: "unit-converter", name: "单位换算", description: "长度、重量、温度等单位转换", category: "计算工具", icon: Ruler },
   { id: "percentage", name: "百分比计算", description: "计算百分比和比例", category: "计算工具", icon: Percent },
   { id: "date-calc", name: "日期计算", description: "计算日期差和日期加减", category: "计算工具", icon: Calendar },
-  { id: "timestamp", name: "时间戳转换", description: "Unix时间戳与日期互转", category: "计算工具", icon: Clock },
-  { id: "bmi-calc", name: "BMI计算器", description: "计算身体质量指数", category: "计算工具", icon: Calculator },
+  { id: "timestamp", name: "时间戳转换", description: "Unix 时间戳与日期互转", category: "计算工具", icon: Clock },
+  { id: "bmi-calc", name: "BMI 计算器", description: "计算身体质量指数", category: "计算工具", icon: Calculator },
   
   // 颜色工具
   { id: "color-picker", name: "取色器", description: "选择和提取颜色", category: "颜色工具", icon: Palette },
-  { id: "color-converter", name: "颜色转换", description: "HEX、RGB、HSL互转", category: "颜色工具", icon: ArrowLeftRight },
-  { id: "gradient-gen", name: "渐变生成器", description: "创建CSS渐变效果", category: "颜色工具", icon: Palette },
+  { id: "color-converter", name: "颜色转换", description: "HEX、RGB、HSL 互转", category: "颜色工具", icon: ArrowLeftRight },
+  { id: "gradient-gen", name: "渐变生成器", description: "创建 CSS 渐变效果", category: "颜色工具", icon: Palette },
+  
+  // 新增工具
+  // 网络工具
+  { id: "ip-lookup", name: "IP 查询", description: "查询 IP 地址归属地信息", category: "网络工具", icon: Search },
+  { id: "whois", name: "WHOIS 查询", description: "查询域名注册信息", category: "网络工具", icon: FileText },
+  { id: "dns-lookup", name: "DNS 查询", description: "查询域名 DNS 记录", category: "网络工具", icon: Hash },
+  
+  // 开发工具
+  { id: "jwt-decoder", name: "JWT 解码", description: "解码 JWT Token 查看内容", category: "开发工具", icon: Lock },
+  { id: "regex-tester", name: "正则测试", description: "测试正则表达式匹配", category: "开发工具", icon: Code },
+  { id: "cron-gen", name: "Cron 生成器", description: "生成 Cron 表达式", category: "开发工具", icon: Calendar },
+  { id: "sql-formatter", name: "SQL 格式化", description: "格式化和美化 SQL 语句", category: "开发工具", icon: FileText },
+  { id: "markdown-preview", name: "Markdown 预览", description: "实时预览 Markdown 效果", category: "开发工具", icon: FileImage },
+  
+  // 安全工具
+  { id: "hash-generator", name: "哈希生成", description: "生成 MD5、SHA 等哈希值", category: "安全工具", icon: Lock },
+  { id: "hmac-generator", name: "HMAC 生成", description: "生成 HMAC 签名", category: "安全工具", icon: Shield },
+  
+  // 生活工具
+  { id: "loan-calc", name: "贷款计算器", description: "计算贷款月供和利息", category: "生活工具", icon: Calculator },
+  { id: "tip-calc", name: "小费计算器", description: "计算小费和分摊金额", category: "生活工具", icon: Percent },
+  { id: "age-calc", name: "年龄计算器", description: "计算年龄和存活天数", category: "生活工具", icon: Calendar },
 ]
 
 const categories = Array.from(new Set(tools.map(tool => tool.category)))
@@ -113,6 +136,10 @@ const categoryTranslations: Record<string, string> = {
   "生成器": "Generators",
   "计算工具": "Calculators",
   "颜色工具": "Color Tools",
+  "网络工具": "Network Tools",
+  "开发工具": "Developer Tools",
+  "安全工具": "Security Tools",
+  "生活工具": "Life Tools",
 }
 
 // 工具名称翻译
@@ -153,6 +180,19 @@ const toolNameTranslations: Record<string, string> = {
   "取色器": "Color Picker",
   "颜色转换": "Color Converter",
   "渐变生成器": "Gradient Generator",
+  "IP 查询": "IP Lookup",
+  "WHOIS 查询": "WHOIS Lookup",
+  "DNS 查询": "DNS Lookup",
+  "JWT 解码": "JWT Decoder",
+  "正则测试": "Regex Tester",
+  "Cron 生成器": "Cron Generator",
+  "SQL 格式化": "SQL Formatter",
+  "Markdown 预览": "Markdown Preview",
+  "哈希生成": "Hash Generator",
+  "HMAC 生成": "HMAC Generator",
+  "贷款计算器": "Loan Calculator",
+  "小费计算器": "Tip Calculator",
+  "年龄计算器": "Age Calculator",
 }
 
 // 工具描述翻译
@@ -193,6 +233,19 @@ const toolDescriptionTranslations: Record<string, string> = {
   "选择和提取颜色": "Select and extract colors",
   "HEX、RGB、HSL 互转": "Convert between HEX, RGB, HSL",
   "创建 CSS 渐变效果": "Create CSS gradient effects",
+  "查询 IP 地址归属地信息": "Lookup IP address location information",
+  "查询域名注册信息": "Lookup domain registration information",
+  "查询域名 DNS 记录": "Lookup domain DNS records",
+  "解码 JWT Token 查看内容": "Decode JWT Token to view contents",
+  "测试正则表达式匹配": "Test regular expression matching",
+  "生成 Cron 表达式": "Generate Cron expressions",
+  "格式化和美化 SQL 语句": "Format and beautify SQL statements",
+  "实时预览 Markdown 效果": "Preview Markdown effects in real-time",
+  "生成 MD5、SHA 等哈希值": "Generate MD5, SHA and other hash values",
+  "生成 HMAC 签名": "Generate HMAC signatures",
+  "计算贷款月供和利息": "Calculate loan monthly payments and interest",
+  "计算小费和分摊金额": "Calculate tips and split amounts",
+  "计算年龄和存活天数": "Calculate age and days lived",
 }
 
 // Tool Modal Component
@@ -303,6 +356,33 @@ function ToolContent({ toolId }: { toolId: string }) {
       return <ImageTool toolId={toolId} />
     case "file-converter":
       return <FileConverterTool />
+    // 新增工具
+    case "ip-lookup":
+      return <IpLookupTool />
+    case "whois":
+      return <WhoisTool />
+    case "dns-lookup":
+      return <DnsLookupTool />
+    case "jwt-decoder":
+      return <JwtDecoderTool />
+    case "regex-tester":
+      return <RegexTesterTool />
+    case "cron-gen":
+      return <CronGeneratorTool />
+    case "sql-formatter":
+      return <SqlFormatterTool />
+    case "markdown-preview":
+      return <MarkdownPreviewTool />
+    case "hash-generator":
+      return <HashGeneratorTool />
+    case "hmac-generator":
+      return <HmacGeneratorTool />
+    case "loan-calc":
+      return <LoanCalcTool />
+    case "tip-calc":
+      return <TipCalcTool />
+    case "age-calc":
+      return <AgeCalcTool />
     default:
       return <PlaceholderTool />
   }
@@ -2299,6 +2379,1166 @@ function FileConverterTool() {
             </>
           )}
         </>
+      )}
+    </div>
+  )
+}
+
+// IP Lookup Tool
+function IpLookupTool() {
+  const { lang } = useTranslation()
+  const [ip, setIp] = useState("")
+  const [result, setResult] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  const handleLookup = async () => {
+    if (!ip.trim()) {
+      setError(lang === 'en' ? "Please enter an IP address" : "请输入 IP 地址")
+      return
+    }
+    
+    setLoading(true)
+    setError("")
+    setResult(null)
+    
+    try {
+      const res = await fetch(`http://ip-api.com/json/${ip.trim()}`)
+      const data = await res.json()
+      
+      if (data.status === 'fail') {
+        setError(data.message || (lang === 'en' ? "Lookup failed" : "查询失败"))
+      } else {
+        setResult(data)
+      }
+    } catch (err) {
+      setError(lang === 'en' ? "Network error" : "网络错误")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={ip}
+          onChange={(e) => setIp(e.target.value)}
+          placeholder={lang === 'en' ? "Enter IP address (e.g., 8.8.8.8)" : "输入 IP 地址（如 8.8.8.8）"}
+          className="flex-1 rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+          onKeyPress={(e) => e.key === 'Enter' && handleLookup()}
+        />
+        <button
+          onClick={handleLookup}
+          disabled={loading}
+          className="rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
+          {loading ? (lang === 'en' ? "Loading..." : "加载中...") : (lang === 'en' ? "Lookup" : "查询")}
+        </button>
+      </div>
+      
+      {error && (
+        <div className="rounded-lg bg-destructive/10 p-4 text-destructive">
+          {error}
+        </div>
+      )}
+      
+      {result && (
+        <div className="rounded-lg border border-border bg-background p-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">{lang === 'en' ? "IP Address" : "IP 地址"}</p>
+              <p className="font-medium">{result.query}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">{lang === 'en' ? "Country" : "国家"}</p>
+              <p className="font-medium">{result.country}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">{lang === 'en' ? "Region" : "省份"}</p>
+              <p className="font-medium">{result.regionName}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">{lang === 'en' ? "City" : "城市"}</p>
+              <p className="font-medium">{result.city}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">{lang === 'en' ? "ISP" : "运营商"}</p>
+              <p className="font-medium">{result.isp}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">{lang === 'en' ? "Timezone" : "时区"}</p>
+              <p className="font-medium">{result.timezone}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">{lang === 'en' ? "Latitude" : "纬度"}</p>
+              <p className="font-medium">{result.lat}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">{lang === 'en' ? "Longitude" : "经度"}</p>
+              <p className="font-medium">{result.lon}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// WHOIS Tool
+function WhoisTool() {
+  const { lang } = useTranslation()
+  const [domain, setDomain] = useState("")
+  const [result, setResult] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  const handleLookup = async () => {
+    if (!domain.trim()) {
+      setError(lang === 'en' ? "Please enter a domain name" : "请输入域名")
+      return
+    }
+    
+    setLoading(true)
+    setError("")
+    setResult("")
+    
+    try {
+      // 使用公共 WHOIS API
+      const res = await fetch(`https://whois-api.vercel.app/${domain.trim()}`)
+      const data = await res.json()
+      
+      if (data.error) {
+        setError(data.error || (lang === 'en' ? "Lookup failed" : "查询失败"))
+      } else {
+        setResult(JSON.stringify(data, null, 2))
+      }
+    } catch (err) {
+      setError(lang === 'en' ? "Network error" : "网络错误")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={domain}
+          onChange={(e) => setDomain(e.target.value)}
+          placeholder={lang === 'en' ? "Enter domain (e.g., google.com)" : "输入域名（如 google.com）"}
+          className="flex-1 rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+          onKeyPress={(e) => e.key === 'Enter' && handleLookup()}
+        />
+        <button
+          onClick={handleLookup}
+          disabled={loading}
+          className="rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
+          {loading ? (lang === 'en' ? "Loading..." : "加载中...") : (lang === 'en' ? "Lookup" : "查询")}
+        </button>
+      </div>
+      
+      {error && (
+        <div className="rounded-lg bg-destructive/10 p-4 text-destructive">
+          {error}
+        </div>
+      )}
+      
+      {result && (
+        <div className="rounded-lg border border-border bg-background p-4">
+          <pre className="whitespace-pre-wrap text-sm font-mono">{result}</pre>
+          <CopyButton text={result} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// DNS Lookup Tool
+function DnsLookupTool() {
+  const { lang } = useTranslation()
+  const [domain, setDomain] = useState("")
+  const [recordType, setRecordType] = useState("A")
+  const [result, setResult] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  const handleLookup = async () => {
+    if (!domain.trim()) {
+      setError(lang === 'en' ? "Please enter a domain name" : "请输入域名")
+      return
+    }
+    
+    setLoading(true)
+    setError("")
+    setResult([])
+    
+    try {
+      // 使用 Google DNS over HTTPS
+      const res = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(domain.trim())}&type=${recordType}`)
+      const data = await res.json()
+      
+      if (data.Answer) {
+        setResult(data.Answer)
+      } else {
+        setError(lang === 'en' ? "No records found" : "未找到记录")
+      }
+    } catch (err) {
+      setError(lang === 'en' ? "Network error" : "网络错误")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={domain}
+          onChange={(e) => setDomain(e.target.value)}
+          placeholder={lang === 'en' ? "Enter domain" : "输入域名"}
+          className="flex-1 rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+          onKeyPress={(e) => e.key === 'Enter' && handleLookup()}
+        />
+        <select
+          value={recordType}
+          onChange={(e) => setRecordType(e.target.value)}
+          className="rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+        >
+          <option value="A">A</option>
+          <option value="AAAA">AAAA</option>
+          <option value="CNAME">CNAME</option>
+          <option value="MX">MX</option>
+          <option value="NS">NS</option>
+          <option value="TXT">TXT</option>
+          <option value="SOA">SOA</option>
+          <option value="PTR">PTR</option>
+        </select>
+        <button
+          onClick={handleLookup}
+          disabled={loading}
+          className="rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
+          {loading ? (lang === 'en' ? "Loading..." : "加载中...") : (lang === 'en' ? "Lookup" : "查询")}
+        </button>
+      </div>
+      
+      {error && (
+        <div className="rounded-lg bg-destructive/10 p-4 text-destructive">
+          {error}
+        </div>
+      )}
+      
+      {result.length > 0 && (
+        <div className="rounded-lg border border-border bg-background p-4">
+          <div className="space-y-2">
+            {result.map((record: any, index) => (
+              <div key={index} className="flex justify-between border-b border-border pb-2 last:border-0">
+                <span className="font-mono text-sm">{record.name}</span>
+                <span className="font-mono text-sm">{record.data}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// JWT Decoder Tool
+function JwtDecoderTool() {
+  const { lang } = useTranslation()
+  const [token, setToken] = useState("")
+  const [header, setHeader] = useState("")
+  const [payload, setPayload] = useState("")
+  const [error, setError] = useState("")
+
+  const decodeJWT = () => {
+    setError("")
+    setHeader("")
+    setPayload("")
+    
+    if (!token.trim()) {
+      setError(lang === 'en' ? "Please enter a JWT token" : "请输入 JWT Token")
+      return
+    }
+    
+    try {
+      const parts = token.trim().split('.')
+      if (parts.length !== 3) {
+        setError(lang === 'en' ? "Invalid JWT format" : "无效的 JWT 格式")
+        return
+      }
+      
+      const headerDecoded = atob(parts[0])
+      const payloadDecoded = atob(parts[1])
+      
+      setHeader(JSON.stringify(JSON.parse(headerDecoded), null, 2))
+      setPayload(JSON.stringify(JSON.parse(payloadDecoded), null, 2))
+    } catch (err) {
+      setError(lang === 'en' ? "Failed to decode JWT" : "JWT 解码失败")
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <textarea
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
+          placeholder={lang === 'en' ? "Enter JWT token" : "输入 JWT Token"}
+          className="h-32 w-full rounded-lg border border-border bg-background px-4 py-2 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+        />
+      </div>
+      
+      <button
+        onClick={decodeJWT}
+        className="w-full rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90"
+      >
+        {lang === 'en' ? "Decode JWT" : "解码 JWT"}
+      </button>
+      
+      {error && (
+        <div className="rounded-lg bg-destructive/10 p-4 text-destructive">
+          {error}
+        </div>
+      )}
+      
+      {(header || payload) && (
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-lg border border-border bg-background p-4">
+            <h3 className="mb-2 font-semibold">{lang === 'en' ? "Header" : "头部"}</h3>
+            <pre className="whitespace-pre-wrap text-xs font-mono">{header}</pre>
+            <CopyButton text={header} />
+          </div>
+          <div className="rounded-lg border border-border bg-background p-4">
+            <h3 className="mb-2 font-semibold">{lang === 'en' ? "Payload" : "载荷"}</h3>
+            <pre className="whitespace-pre-wrap text-xs font-mono">{payload}</pre>
+            <CopyButton text={payload} />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Regex Tester Tool
+function RegexTesterTool() {
+  const { lang } = useTranslation()
+  const [pattern, setPattern] = useState("")
+  const [flags, setFlags] = useState("g")
+  const [testString, setTestString] = useState("")
+  const [matches, setMatches] = useState<any[]>([])
+  const [error, setError] = useState("")
+
+  const testRegex = () => {
+    setError("")
+    setMatches([])
+    
+    if (!pattern) {
+      setError(lang === 'en' ? "Please enter a regex pattern" : "请输入正则表达式")
+      return
+    }
+    
+    try {
+      const regex = new RegExp(pattern, flags)
+      const found = [...testString.matchAll(regex)]
+      
+      if (found.length === 0) {
+        setError(lang === 'en' ? "No matches found" : "未找到匹配")
+      } else {
+        setMatches(found.map((match, index) => ({
+          index,
+          match: match[0],
+          groups: match.slice(1),
+          position: match.index
+        })))
+      }
+    } catch (err: any) {
+      setError(err.message || (lang === 'en' ? "Invalid regex pattern" : "无效的正则表达式"))
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={pattern}
+          onChange={(e) => setPattern(e.target.value)}
+          placeholder={lang === 'en' ? "Regex pattern" : "正则表达式"}
+          className="flex-1 rounded-lg border border-border bg-background px-4 py-2 font-mono text-foreground focus:border-primary focus:outline-none"
+        />
+        <input
+          type="text"
+          value={flags}
+          onChange={(e) => setFlags(e.target.value)}
+          placeholder="flags"
+          className="w-20 rounded-lg border border-border bg-background px-4 py-2 font-mono text-foreground focus:border-primary focus:outline-none"
+        />
+      </div>
+      
+      <div>
+        <textarea
+          value={testString}
+          onChange={(e) => setTestString(e.target.value)}
+          placeholder={lang === 'en' ? "Test string" : "测试文本"}
+          className="h-32 w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+        />
+      </div>
+      
+      <button
+        onClick={testRegex}
+        className="w-full rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90"
+      >
+        {lang === 'en' ? "Test Regex" : "测试正则"}
+      </button>
+      
+      {error && (
+        <div className="rounded-lg bg-destructive/10 p-4 text-destructive">
+          {error}
+        </div>
+      )}
+      
+      {matches.length > 0 && (
+        <div className="rounded-lg border border-border bg-background p-4">
+          <h3 className="mb-2 font-semibold">{lang === 'en' ? "Matches" : "匹配结果"}</h3>
+          <div className="space-y-2">
+            {matches.map((match) => (
+              <div key={match.index} className="rounded border border-border p-2">
+                <p className="text-sm">
+                  <span className="text-muted-foreground">{lang === 'en' ? "Position" : "位置"}: </span>
+                  <span className="font-mono">{match.position}</span>
+                </p>
+                <p className="text-sm">
+                  <span className="text-muted-foreground">{lang === 'en' ? "Match" : "匹配"}: </span>
+                  <span className="font-mono text-primary">{match.match}</span>
+                </p>
+                {match.groups.length > 0 && (
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">{lang === 'en' ? "Groups" : "分组"}: </span>
+                    <span className="font-mono">{match.groups.join(', ')}</span>
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Cron Generator Tool
+function CronGeneratorTool() {
+  const { lang } = useTranslation()
+  const [minute, setMinute] = useState("*")
+  const [hour, setHour] = useState("*")
+  const [dayOfMonth, setDayOfMonth] = useState("*")
+  const [month, setMonth] = useState("*")
+  const [dayOfWeek, setDayOfWeek] = useState("*")
+  const [cronExpression, setCronExpression] = useState("")
+
+  const generateCron = () => {
+    const cron = `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`
+    setCronExpression(cron)
+  }
+
+  const getHumanReadable = () => {
+    // 简化的人类可读描述
+    const parts: string[] = []
+    if (minute !== "*") parts.push(`${lang === 'en' ? "at minute" : "第${minute}分钟"}`)
+    if (hour !== "*") parts.push(`${lang === 'en' ? "at hour" : "第${hour}小时"}`)
+    if (dayOfMonth !== "*") parts.push(`${lang === 'en' ? "on day" : "第${dayOfMonth}天"}`)
+    if (month !== "*") parts.push(`${lang === 'en' ? "in month" : "第${month}月"}`)
+    if (dayOfWeek !== "*") parts.push(`${lang === 'en' ? "on weekday" : "星期${dayOfWeek}"}`)
+    
+    if (parts.length === 0) return lang === 'en' ? "Every minute" : "每分钟"
+    return parts.join(" ")
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-5 gap-2">
+        <div>
+          <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Minute" : "分钟"}</label>
+          <input
+            type="text"
+            value={minute}
+            onChange={(e) => setMinute(e.target.value)}
+            placeholder="*"
+            className="w-full rounded-lg border border-border bg-background px-4 py-2 font-mono text-foreground focus:border-primary focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Hour" : "小时"}</label>
+          <input
+            type="text"
+            value={hour}
+            onChange={(e) => setHour(e.target.value)}
+            placeholder="*"
+            className="w-full rounded-lg border border-border bg-background px-4 py-2 font-mono text-foreground focus:border-primary focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Day of Month" : "日期"}</label>
+          <input
+            type="text"
+            value={dayOfMonth}
+            onChange={(e) => setDayOfMonth(e.target.value)}
+            placeholder="*"
+            className="w-full rounded-lg border border-border bg-background px-4 py-2 font-mono text-foreground focus:border-primary focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Month" : "月份"}</label>
+          <input
+            type="text"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            placeholder="*"
+            className="w-full rounded-lg border border-border bg-background px-4 py-2 font-mono text-foreground focus:border-primary focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Day of Week" : "星期"}</label>
+          <input
+            type="text"
+            value={dayOfWeek}
+            onChange={(e) => setDayOfWeek(e.target.value)}
+            placeholder="*"
+            className="w-full rounded-lg border border-border bg-background px-4 py-2 font-mono text-foreground focus:border-primary focus:outline-none"
+          />
+        </div>
+      </div>
+      
+      <button
+        onClick={generateCron}
+        className="w-full rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90"
+      >
+        {lang === 'en' ? "Generate Cron Expression" : "生成 Cron 表达式"}
+      </button>
+      
+      {cronExpression && (
+        <div className="rounded-lg border border-border bg-background p-4">
+          <h3 className="mb-2 font-semibold">{lang === 'en' ? "Cron Expression" : "Cron 表达式"}</h3>
+          <p className="mb-2 font-mono text-lg text-primary">{cronExpression}</p>
+          <p className="text-sm text-muted-foreground">{getHumanReadable()}</p>
+          <CopyButton text={cronExpression} />
+        </div>
+      )}
+      
+      <div className="rounded-lg border border-border bg-background p-4">
+        <h3 className="mb-2 font-semibold">{lang === 'en' ? "Examples" : "示例"}</h3>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="font-mono">* * * * *</span>
+            <span className="text-muted-foreground">{lang === 'en' ? "Every minute" : "每分钟"}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-mono">0 * * * *</span>
+            <span className="text-muted-foreground">{lang === 'en' ? "Every hour" : "每小时"}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-mono">0 0 * * *</span>
+            <span className="text-muted-foreground">{lang === 'en' ? "Every day at midnight" : "每天午夜"}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-mono">0 0 * * 0</span>
+            <span className="text-muted-foreground">{lang === 'en' ? "Every Sunday at midnight" : "每周日午夜"}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// SQL Formatter Tool
+function SqlFormatterTool() {
+  const { lang } = useTranslation()
+  const [input, setInput] = useState("")
+  const [output, setOutput] = useState("")
+
+  const formatSQL = () => {
+    if (!input.trim()) return
+    
+    // 简化的 SQL 格式化
+    let formatted = input.trim()
+    
+    // 关键字大写
+    const keywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'LEFT', 'RIGHT', 'INNER', 'OUTER', 'ON', 'AND', 'OR', 'ORDER BY', 'GROUP BY', 'HAVING', 'LIMIT', 'OFFSET', 'INSERT INTO', 'VALUES', 'UPDATE', 'SET', 'DELETE', 'CREATE TABLE', 'ALTER TABLE', 'DROP TABLE']
+    
+    keywords.forEach(keyword => {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'gi')
+      formatted = formatted.replace(regex, keyword)
+    })
+    
+    // 添加换行
+    formatted = formatted.replace(/\b(FROM|WHERE|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|ORDER BY|GROUP BY|HAVING|LIMIT|VALUES|SET)\b/gi, '\n$1')
+    
+    setOutput(formatted)
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Input SQL" : "输入 SQL"}</label>
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder={lang === 'en' ? "Enter SQL statement" : "输入 SQL 语句"}
+          className="h-32 w-full rounded-lg border border-border bg-background px-4 py-2 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+        />
+      </div>
+      
+      <button
+        onClick={formatSQL}
+        className="w-full rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90"
+      >
+        {lang === 'en' ? "Format SQL" : "格式化 SQL"}
+      </button>
+      
+      {output && (
+        <div>
+          <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Formatted SQL" : "格式化后的 SQL"}</label>
+          <textarea
+            value={output}
+            readOnly
+            className="h-32 w-full rounded-lg border border-border bg-background px-4 py-2 font-mono text-sm text-foreground"
+          />
+          <CopyButton text={output} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Markdown Preview Tool
+function MarkdownPreviewTool() {
+  const { lang } = useTranslation()
+  const [markdown, setMarkdown] = useState("")
+  
+  // 简化的 Markdown 转 HTML
+  const markdownToHtml = (md: string) => {
+    let html = md
+    
+    // 标题 - 添加不同的样式和大小
+    html = html.replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold mt-4 mb-2 text-foreground">$1</h3>')
+    html = html.replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mt-5 mb-3 text-foreground border-b border-border pb-2">$1</h2>')
+    html = html.replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-6 mb-4 text-foreground border-b-2 border-primary pb-2">$1</h1>')
+    
+    // 粗体和斜体
+    html = html.replace(/\*\*(.*)\*\*/gim, '<strong class="font-bold">$1</strong>')
+    html = html.replace(/\*(.*)\*/gim, '<em class="font-italic">$1</em>')
+    
+    // 链接
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">$1</a>')
+    
+    // 图片
+    html = html.replace(/!\[([^\]]+)\]\(([^)]+)\)/gim, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4" />')
+    
+    // 代码块
+    html = html.replace(/```([\s\S]*?)```/gim, '<pre class="bg-muted p-4 rounded-lg overflow-x-auto my-4"><code class="text-sm font-mono">$1</code></pre>')
+    
+    // 行内代码
+    html = html.replace(/`([^`]+)`/gim, '<code class="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">$1</code>')
+    
+    // 引用
+    html = html.replace(/^> (.*$)/gim, '<blockquote class="border-l-4 border-primary pl-4 italic my-4 text-muted-foreground">$1</blockquote>')
+    
+    // 无序列表
+    html = html.replace(/^\- (.*$)/gim, '<li class="ml-4">$1</li>')
+    html = html.replace(/(<li class="ml-4">.*<\/li>)/gim, '<ul class="list-disc list-inside my-2 space-y-1">$1</ul>')
+    
+    // 有序列表
+    html = html.replace(/^\d+\. (.*$)/gim, '<li class="ml-4">$1</li>')
+    html = html.replace(/(<li class="ml-4">.*<\/li>)(?!\s*<li class="ml-4">)/gim, '<ol class="list-decimal list-inside my-2 space-y-1">$1</ol>')
+    
+    // 换行
+    html = html.replace(/\n/gim, '<br />')
+    
+    return html
+  }
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div>
+        <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Markdown" : "Markdown"}</label>
+        <textarea
+          value={markdown}
+          onChange={(e) => setMarkdown(e.target.value)}
+          placeholder={lang === 'en' ? "Enter Markdown here" : "在此输入 Markdown"}
+          className="h-96 w-full rounded-lg border border-border bg-background px-4 py-2 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+        />
+      </div>
+      <div>
+        <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Preview" : "预览"}</label>
+        <div
+          className="h-96 w-full overflow-y-auto rounded-lg border border-border bg-background p-4"
+          dangerouslySetInnerHTML={{ __html: markdownToHtml(markdown) }}
+        />
+      </div>
+    </div>
+  )
+}
+
+// Hash Generator Tool
+function HashGeneratorTool() {
+  const { lang } = useTranslation()
+  const [input, setInput] = useState("")
+  const [hashType, setHashType] = useState("MD5")
+  const [hash, setHash] = useState("")
+
+  const generateHash = async () => {
+    if (!input) return
+    
+    try {
+      const encoder = new TextEncoder()
+      const data = encoder.encode(input)
+      
+      let hashBuffer: ArrayBuffer
+      
+      switch (hashType) {
+        case "SHA-1":
+          hashBuffer = await crypto.subtle.digest("SHA-1", data)
+          break
+        case "SHA-256":
+          hashBuffer = await crypto.subtle.digest("SHA-256", data)
+          break
+        case "SHA-384":
+          hashBuffer = await crypto.subtle.digest("SHA-384", data)
+          break
+        case "SHA-512":
+          hashBuffer = await crypto.subtle.digest("SHA-512", data)
+          break
+        default:
+          // MD5 (使用简化的实现)
+          hashBuffer = await crypto.subtle.digest("SHA-256", data)
+      }
+      
+      const hashArray = Array.from(new Uint8Array(hashBuffer))
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+      setHash(hashHex)
+    } catch (err) {
+      console.error("Hash generation failed:", err)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Input Text" : "输入文本"}</label>
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder={lang === 'en' ? "Enter text to hash" : "输入要哈希的文本"}
+          className="h-24 w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+        />
+      </div>
+      
+      <div className="flex gap-2">
+        <select
+          value={hashType}
+          onChange={(e) => setHashType(e.target.value)}
+          className="flex-1 rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+        >
+          <option value="MD5">MD5</option>
+          <option value="SHA-1">SHA-1</option>
+          <option value="SHA-256">SHA-256</option>
+          <option value="SHA-384">SHA-384</option>
+          <option value="SHA-512">SHA-512</option>
+        </select>
+        <button
+          onClick={generateHash}
+          className="rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90"
+        >
+          {lang === 'en' ? "Generate" : "生成"}
+        </button>
+      </div>
+      
+      {hash && (
+        <div className="rounded-lg border border-border bg-background p-4">
+          <h3 className="mb-2 font-semibold">{hashType} Hash</h3>
+          <p className="break-all font-mono text-sm text-primary">{hash}</p>
+          <CopyButton text={hash} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// HMAC Generator Tool
+function HmacGeneratorTool() {
+  const { lang } = useTranslation()
+  const [message, setMessage] = useState("")
+  const [secret, setSecret] = useState("")
+  const [algorithm, setAlgorithm] = useState("SHA-256")
+  const [hmac, setHmac] = useState("")
+
+  const generateHmac = async () => {
+    if (!message || !secret) return
+    
+    try {
+      const encoder = new TextEncoder()
+      const keyData = encoder.encode(secret)
+      const messageData = encoder.encode(message)
+      
+      const key = await crypto.subtle.importKey(
+        "raw",
+        keyData,
+        { name: "HMAC", hash: algorithm },
+        false,
+        ["sign"]
+      )
+      
+      const signature = await crypto.subtle.sign("HMAC", key, messageData)
+      const hashArray = Array.from(new Uint8Array(signature))
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+      
+      setHmac(hashHex)
+    } catch (err) {
+      console.error("HMAC generation failed:", err)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Message" : "消息"}</label>
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder={lang === 'en' ? "Enter message" : "输入消息"}
+          className="h-20 w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+        />
+      </div>
+      
+      <div>
+        <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Secret Key" : "密钥"}</label>
+        <input
+          type="password"
+          value={secret}
+          onChange={(e) => setSecret(e.target.value)}
+          placeholder={lang === 'en' ? "Enter secret key" : "输入密钥"}
+          className="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+        />
+      </div>
+      
+      <div className="flex gap-2">
+        <select
+          value={algorithm}
+          onChange={(e) => setAlgorithm(e.target.value)}
+          className="flex-1 rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+        >
+          <option value="SHA-1">SHA-1</option>
+          <option value="SHA-256">SHA-256</option>
+          <option value="SHA-384">SHA-384</option>
+          <option value="SHA-512">SHA-512</option>
+        </select>
+        <button
+          onClick={generateHmac}
+          className="rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90"
+        >
+          {lang === 'en' ? "Generate HMAC" : "生成 HMAC"}
+        </button>
+      </div>
+      
+      {hmac && (
+        <div className="rounded-lg border border-border bg-background p-4">
+          <h3 className="mb-2 font-semibold">HMAC ({algorithm})</h3>
+          <p className="break-all font-mono text-sm text-primary">{hmac}</p>
+          <CopyButton text={hmac} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Loan Calculator Tool
+function LoanCalcTool() {
+  const { lang } = useTranslation()
+  const [amount, setAmount] = useState("")
+  const [rate, setRate] = useState("")
+  const [months, setMonths] = useState("")
+  const [result, setResult] = useState<any>(null)
+
+  const calculate = () => {
+    const principal = parseFloat(amount)
+    const annualRate = parseFloat(rate) / 100 / 12
+    const numPayments = parseInt(months)
+    
+    if (!principal || !annualRate || !numPayments) return
+    
+    // 等额本息计算公式
+    const monthlyPayment = (principal * annualRate * Math.pow(1 + annualRate, numPayments)) / (Math.pow(1 + annualRate, numPayments) - 1)
+    const totalPayment = monthlyPayment * numPayments
+    const totalInterest = totalPayment - principal
+    
+    setResult({
+      monthlyPayment: monthlyPayment.toFixed(2),
+      totalPayment: totalPayment.toFixed(2),
+      totalInterest: totalInterest.toFixed(2)
+    })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-3">
+        <div>
+          <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Loan Amount" : "贷款金额"}</label>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder={lang === 'en' ? "e.g., 100000" : "如 100000"}
+            className="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Annual Rate (%)" : "年利率 (%)"}</label>
+          <input
+            type="number"
+            step="0.01"
+            value={rate}
+            onChange={(e) => setRate(e.target.value)}
+            placeholder={lang === 'en' ? "e.g., 4.5" : "如 4.5"}
+            className="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Months" : "期数 (月)"}</label>
+          <input
+            type="number"
+            value={months}
+            onChange={(e) => setMonths(e.target.value)}
+            placeholder={lang === 'en' ? "e.g., 360" : "如 360"}
+            className="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+          />
+        </div>
+      </div>
+      
+      <button
+        onClick={calculate}
+        className="w-full rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90"
+      >
+        {lang === 'en' ? "Calculate" : "计算"}
+      </button>
+      
+      {result && (
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-lg border border-border bg-background p-4">
+            <p className="text-sm text-muted-foreground">{lang === 'en' ? "Monthly Payment" : "月供"}</p>
+            <p className="text-2xl font-bold text-primary">¥{result.monthlyPayment}</p>
+          </div>
+          <div className="rounded-lg border border-border bg-background p-4">
+            <p className="text-sm text-muted-foreground">{lang === 'en' ? "Total Payment" : "总还款"}</p>
+            <p className="text-2xl font-bold text-primary">¥{result.totalPayment}</p>
+          </div>
+          <div className="rounded-lg border border-border bg-background p-4">
+            <p className="text-sm text-muted-foreground">{lang === 'en' ? "Total Interest" : "总利息"}</p>
+            <p className="text-2xl font-bold text-primary">¥{result.totalInterest}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Tip Calculator Tool
+function TipCalcTool() {
+  const { lang } = useTranslation()
+  const [amount, setAmount] = useState("")
+  const [tipPercent, setTipPercent] = useState("15")
+  const [people, setPeople] = useState("1")
+  const [result, setResult] = useState<any>(null)
+
+  const calculate = () => {
+    const bill = parseFloat(amount)
+    const tip = parseFloat(tipPercent) / 100
+    const numPeople = parseInt(people)
+    
+    if (!bill || !tip || !numPeople) return
+    
+    const tipAmount = bill * tip
+    const total = bill + tipAmount
+    const perPerson = total / numPeople
+    
+    setResult({
+      tipAmount: tipAmount.toFixed(2),
+      total: total.toFixed(2),
+      perPerson: perPerson.toFixed(2)
+    })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-3">
+        <div>
+          <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Bill Amount" : "账单金额"}</label>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder={lang === 'en' ? "e.g., 100" : "如 100"}
+            className="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Tip (%)" : "小费比例 (%)"}</label>
+          <select
+            value={tipPercent}
+            onChange={(e) => setTipPercent(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+          >
+            <option value="5">5%</option>
+            <option value="10">10%</option>
+            <option value="15">15%</option>
+            <option value="18">18%</option>
+            <option value="20">20%</option>
+            <option value="25">25%</option>
+            <option value="30">30%</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "People" : "人数"}</label>
+          <input
+            type="number"
+            value={people}
+            onChange={(e) => setPeople(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+          />
+        </div>
+      </div>
+      
+      <button
+        onClick={calculate}
+        className="w-full rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90"
+      >
+        {lang === 'en' ? "Calculate" : "计算"}
+      </button>
+      
+      {result && (
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-lg border border-border bg-background p-4">
+            <p className="text-sm text-muted-foreground">{lang === 'en' ? "Tip Amount" : "小费金额"}</p>
+            <p className="text-2xl font-bold text-primary">¥{result.tipAmount}</p>
+          </div>
+          <div className="rounded-lg border border-border bg-background p-4">
+            <p className="text-sm text-muted-foreground">{lang === 'en' ? "Total" : "总计"}</p>
+            <p className="text-2xl font-bold text-primary">¥{result.total}</p>
+          </div>
+          <div className="rounded-lg border border-border bg-background p-4">
+            <p className="text-sm text-muted-foreground">{lang === 'en' ? "Per Person" : "每人"}</p>
+            <p className="text-2xl font-bold text-primary">¥{result.perPerson}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Age Calculator Tool
+function AgeCalcTool() {
+  const { lang } = useTranslation()
+  const [birthDate, setBirthDate] = useState("")
+  const [result, setResult] = useState<any>(null)
+
+  const calculate = () => {
+    if (!birthDate) return
+    
+    const birth = new Date(birthDate)
+    const now = new Date()
+    
+    // 计算年龄
+    let years = now.getFullYear() - birth.getFullYear()
+    let months = now.getMonth() - birth.getMonth()
+    let days = now.getDate() - birth.getDate()
+    
+    if (days < 0) {
+      months--
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 0)
+      days += lastMonth.getDate()
+    }
+    
+    if (months < 0) {
+      years--
+      months += 12
+    }
+    
+    // 计算总天数
+    const diffTime = Math.abs(now.getTime() - birth.getTime())
+    const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    // 计算下一个生日
+    const nextBirthday = new Date(now.getFullYear(), birth.getMonth(), birth.getDate())
+    if (now > nextBirthday) {
+      nextBirthday.setFullYear(nextBirthday.getFullYear() + 1)
+    }
+    const daysToNextBirthday = Math.ceil((nextBirthday.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    
+    setResult({
+      years,
+      months,
+      days,
+      totalDays,
+      daysToNextBirthday,
+      nextBirthday: nextBirthday.toLocaleDateString('zh-CN')
+    })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="mb-1 block text-sm text-muted-foreground">{lang === 'en' ? "Date of Birth" : "出生日期"}</label>
+        <input
+          type="date"
+          value={birthDate}
+          onChange={(e) => setBirthDate(e.target.value)}
+          className="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+        />
+      </div>
+      
+      <button
+        onClick={calculate}
+        className="w-full rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90"
+      >
+        {lang === 'en' ? "Calculate Age" : "计算年龄"}
+      </button>
+      
+      {result && (
+        <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-lg border border-border bg-background p-4">
+              <p className="text-sm text-muted-foreground">{lang === 'en' ? "Years" : "岁"}</p>
+              <p className="text-2xl font-bold text-primary">{result.years}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-4">
+              <p className="text-sm text-muted-foreground">{lang === 'en' ? "Months" : "月"}</p>
+              <p className="text-2xl font-bold text-primary">{result.months}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-4">
+              <p className="text-sm text-muted-foreground">{lang === 'en' ? "Days" : "天"}</p>
+              <p className="text-2xl font-bold text-primary">{result.days}</p>
+            </div>
+          </div>
+          
+          <div className="rounded-lg border border-border bg-background p-4">
+            <p className="text-sm text-muted-foreground">{lang === 'en' ? "Total Days Lived" : "已存活天数"}</p>
+            <p className="text-2xl font-bold text-primary">{result.totalDays.toLocaleString()}</p>
+          </div>
+          
+          <div className="rounded-lg border border-border bg-background p-4">
+            <p className="text-sm text-muted-foreground">{lang === 'en' ? "Next Birthday" : "下一个生日"}</p>
+            <p className="text-lg font-medium">{result.nextBirthday}</p>
+            <p className="text-sm text-muted-foreground">
+              {lang === 'en' ? `in ${result.daysToNextBirthday} days` : `还有 ${result.daysToNextBirthday} 天`}
+            </p>
+          </div>
+        </div>
       )}
     </div>
   )

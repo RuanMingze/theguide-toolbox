@@ -8,6 +8,31 @@ export function ServiceWorkerRegistration() {
   const [updateAvailable, setUpdateAvailable] = useState(false)
 
   useEffect(() => {
+    // 开发环境下不注册 Service Worker
+    if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      console.log('开发环境：禁用 Service Worker')
+      
+      // 清理已存在的 Service Worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          registrations.forEach((registration) => {
+            console.log('开发环境：注销 Service Worker', registration.scope)
+            registration.unregister()
+          })
+        })
+        
+        // 清理缓存
+        caches.keys().then((cacheNames) => {
+          cacheNames.forEach((cacheName) => {
+            console.log('开发环境：清理缓存', cacheName)
+            caches.delete(cacheName)
+          })
+        })
+      }
+      
+      return
+    }
+
     if (!('serviceWorker' in navigator)) {
       console.log('浏览器不支持 Service Worker')
       return

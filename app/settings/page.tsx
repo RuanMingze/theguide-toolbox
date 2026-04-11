@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Image, Eye, EyeOff, X, Upload, Link as LinkIcon, Sparkles } from 'lucide-react'
+import { Image, Eye, EyeOff, X, Upload, Link as LinkIcon, Sparkles, Sun, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 import { useTranslation } from '@/hooks/use-translation'
@@ -15,7 +15,7 @@ const wallpapers = [
   {
     id: 'gradient-1',
     name: '渐变 1',
-    url: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    url: 'linear-gradient(135deg, #e6a800ff 0%, #fff458ff 100%)',
   },
   {
     id: 'gradient-2',
@@ -41,6 +41,7 @@ const wallpapers = [
 
 export default function SettingsPage() {
   const { t, lang } = useTranslation()
+  const [mounted, setMounted] = useState(false)
   const [wallpaper, setWallpaper] = useState<string>('')
   const [glassEffect, setGlassEffect] = useState<boolean>(true)
   const [glassColor, setGlassColor] = useState<string>('255, 255, 255')
@@ -56,11 +57,23 @@ export default function SettingsPage() {
   const { toast } = useToast()
 
   useEffect(() => {
-    // 从 localStorage 加载设置
+    setMounted(true)
+    
+    // 从 localStorage 加载设置并立即应用
     const savedSettings = localStorage.getItem('theguide-settings')
+    const root = document.documentElement
+    const body = document.body
+    
+    // 如果没有保存的设置，使用默认壁纸
+    const defaultWallpaper = "url('https://luckycola.com.cn/public/imgs/luckycola_Imghub_forever_5Z1Q1XpG17752164264304110.jpg')"
+    const wallpaperToApply = savedSettings ? JSON.parse(savedSettings).wallpaper : defaultWallpaper
+    
+    console.log('[SettingsPage] Initial wallpaper to apply:', wallpaperToApply)
+    
+    setWallpaper(wallpaperToApply)
+    
     if (savedSettings) {
       const settings = JSON.parse(savedSettings)
-      setWallpaper(settings.wallpaper || '')
       setGlassEffect(settings.glassEffect ?? true)
       setGlassColor(settings.glassColor || '255, 255, 255')
       setGlassOpacity(settings.glassOpacity || 10)
@@ -70,20 +83,48 @@ export default function SettingsPage() {
       if (settings.customImageUrl) {
         setCustomImageUrl(settings.customImageUrl)
       }
+    } else {
+      // 首次访问时使用默认壁纸
+      setCustomImageUrl('https://luckycola.com.cn/public/imgs/luckycola_Imghub_forever_5Z1Q1XpG17752164264304110.jpg')
+    }
+    
+    // 立即应用壁纸 - 直接设置 inline style
+    if (wallpaperToApply) {
+      root.style.setProperty('--custom-wallpaper', wallpaperToApply)
+      console.log('[SettingsPage] Initial wallpaper applied:', wallpaperToApply)
+      
+      // 强制应用 background-image 到 body
+      body.style.backgroundImage = wallpaperToApply
+      body.style.backgroundSize = 'cover'
+      body.style.backgroundPosition = 'center'
+      body.style.backgroundAttachment = 'fixed'
+      body.style.backgroundRepeat = 'no-repeat'
+      console.log('[SettingsPage] Body inline styles set')
     }
   }, [])
   
   // 每次设置变化时立即应用
   useEffect(() => {
-    // 应用壁纸
+    const root = document.documentElement
     const body = document.body
+    
+    console.log('[SettingsPage] useEffect triggered', {
+      wallpaper: wallpaper ? wallpaper.substring(0, 50) + '...' : 'none'
+    })
+    
+    // 应用壁纸 - 使用 CSS 变量 + inline style
     if (wallpaper) {
-      body.style.setProperty('background-image', wallpaper, 'important')
-      body.style.setProperty('background-size', 'cover', 'important')
-      body.style.setProperty('background-position', 'center', 'important')
-      body.style.setProperty('background-attachment', 'fixed', 'important')
-      body.style.setProperty('background-color', 'transparent', 'important')
-      console.log('[SettingsPage] Wallpaper applied:', wallpaper.substring(0, 50) + '...')
+      root.style.setProperty('--custom-wallpaper', wallpaper)
+      console.log('[SettingsPage] Wallpaper applied:', wallpaper)
+      console.log('[SettingsPage] CSS variable --custom-wallpaper set to:', wallpaper)
+      
+      // 强制应用 inline style（优先级最高）
+      body.style.backgroundImage = wallpaper
+      body.style.backgroundSize = 'cover'
+      body.style.backgroundPosition = 'center'
+      body.style.backgroundAttachment = 'fixed'
+      body.style.backgroundRepeat = 'no-repeat'
+      console.log('[SettingsPage] Body inline styles applied')
       
       // 广播设置变化
       const channel = new BroadcastChannel('theguide-settings')
@@ -93,16 +134,11 @@ export default function SettingsPage() {
       })
       channel.close()
     } else {
-      body.style.removeProperty('background-image')
-      body.style.removeProperty('background-size')
-      body.style.removeProperty('background-position')
-      body.style.removeProperty('background-attachment')
-      body.style.removeProperty('background-color')
+      root.style.removeProperty('--custom-wallpaper')
+      console.log('[SettingsPage] Wallpaper removed')
     }
     
     // 应用液体玻璃或毛玻璃效果
-    const root = document.documentElement
-    
     if (liquidGlassEffect) {
       // 液体玻璃启用时，关闭毛玻璃
       body.classList.add('liquid-glass-enabled')
@@ -110,16 +146,34 @@ export default function SettingsPage() {
       root.style.setProperty('--lg-refraction', `${liquidRefraction}%`)
       root.style.removeProperty('--glass-bg')
       root.style.removeProperty('--glass-blur')
+      console.log('[SettingsPage] Liquid glass enabled')
     } else {
       body.classList.remove('liquid-glass-enabled')
       if (glassEffect) {
         root.style.setProperty('--glass-bg', `rgba(${glassColor}, ${glassOpacity / 100})`)
         root.style.setProperty('--glass-blur', '20px')
+        console.log('[SettingsPage] Glass effect enabled')
       } else {
         root.style.removeProperty('--glass-bg')
         root.style.removeProperty('--glass-blur')
+        console.log('[SettingsPage] Glass effect disabled')
       }
     }
+    
+    // 检查当前的背景样式
+    setTimeout(() => {
+      console.log('[SettingsPage] Current body styles:', {
+        backgroundImage: body.style.backgroundImage,
+        backgroundColor: body.style.backgroundColor,
+        backgroundSize: body.style.backgroundSize,
+        backgroundPosition: body.style.backgroundPosition,
+        backgroundAttachment: body.style.backgroundAttachment
+      })
+      console.log('[SettingsPage] Current CSS variables:', {
+        '--custom-wallpaper': root.style.getPropertyValue('--custom-wallpaper'),
+        '--background': getComputedStyle(root).getPropertyValue('--background')
+      })
+    }, 100)
   }, [wallpaper, glassEffect, glassColor, glassOpacity, liquidGlassEffect, liquidBlur, liquidRefraction])
 
   const handleSettingChange = () => {
@@ -150,19 +204,47 @@ export default function SettingsPage() {
   }, [wallpaper, glassEffect, glassColor, glassOpacity, liquidGlassEffect, liquidBlur, liquidRefraction, customImageUrl])
 
   const handleReset = () => {
-    setWallpaper('')
+    console.log('[SettingsPage] handleReset called')
+    console.log('[SettingsPage] Before reset - body styles:', {
+      backgroundImage: document.body.style.backgroundImage,
+      backgroundColor: document.body.style.backgroundColor
+    })
+    console.log('[SettingsPage] Before reset - CSS variables:', {
+      '--custom-wallpaper': document.documentElement.style.getPropertyValue('--custom-wallpaper')
+    })
+    
+    setWallpaper(`url('https://luckycola.com.cn/public/imgs/luckycola_Imghub_forever_5Z1Q1XpG17752164264304110.jpg')`)
     setGlassEffect(true)
     setGlassColor('255, 255, 255')
     setGlassOpacity(10)
     setLiquidGlassEffect(false)
     setLiquidBlur(50)
     setLiquidRefraction(200)
-    setCustomImageUrl('')
+    setCustomImageUrl('https://luckycola.com.cn/public/imgs/luckycola_Imghub_forever_5Z1Q1XpG17752164264304110.jpg')
     localStorage.removeItem('theguide-settings')
     document.body.classList.remove('liquid-glass-enabled')
     const root = document.documentElement
     root.style.setProperty('--lg-blur', '50px')
     root.style.setProperty('--lg-refraction', '200%')
+    // 清除已应用的样式
+    console.log('[SettingsPage] Removing inline background styles from body')
+    document.body.style.removeProperty('background-image')
+    document.body.style.removeProperty('background-size')
+    document.body.style.removeProperty('background-position')
+    document.body.style.removeProperty('background-attachment')
+    document.body.style.removeProperty('background-color')
+    root.style.removeProperty('--glass-bg')
+    root.style.removeProperty('--glass-blur')
+    
+    setTimeout(() => {
+      console.log('[SettingsPage] After reset - body styles:', {
+        backgroundImage: document.body.style.backgroundImage,
+        backgroundColor: document.body.style.backgroundColor
+      })
+      console.log('[SettingsPage] After reset - CSS variables:', {
+        '--custom-wallpaper': root.style.getPropertyValue('--custom-wallpaper')
+      })
+    }, 100)
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
