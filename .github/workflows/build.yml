@@ -20,13 +20,19 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
         env:
           NODE_ENV: production
 
       - name: Build Next.js project
-        run: npm run build
+        run: pnpm build
         env:
           NODE_ENV: production
 
@@ -44,7 +50,7 @@ jobs:
             .next/ \
             public/ \
             package.json \
-            package-lock.json
+            pnpm-lock.yaml
 
       - name: Upload production bundle
         uses: actions/upload-artifact@v4
@@ -66,5 +72,5 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Build Information" >> $GITHUB_STEP_SUMMARY
           echo "- Node version: $(node -v)" >> $GITHUB_STEP_SUMMARY
-          echo "- npm version: $(npm -v)" >> $GITHUB_STEP_SUMMARY
+          echo "- pnpm version: $(pnpm -v)" >> $GITHUB_STEP_SUMMARY
           echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
