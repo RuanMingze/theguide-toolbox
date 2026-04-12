@@ -1,0 +1,70 @@
+name: Build and Upload Artifact
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          NODE_ENV: production
+
+      - name: Build Next.js project
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Upload .next directory
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-build-output
+          path: .next/
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Create production bundle
+        run: |
+          tar -czf next-production-bundle.tar.gz \
+            .next/ \
+            public/ \
+            package.json \
+            package-lock.json
+
+      - name: Upload production bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-production-bundle
+          path: next-production-bundle.tar.gz
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Build Summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Build completed successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- **next-build-output**: Complete .next directory" >> $GITHUB_STEP_SUMMARY
+          echo "- **next-production-bundle**: Production ready bundle (.tar.gz)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Information" >> $GITHUB_STEP_SUMMARY
+          echo "- Node version: $(node -v)" >> $GITHUB_STEP_SUMMARY
+          echo "- npm version: $(npm -v)" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
