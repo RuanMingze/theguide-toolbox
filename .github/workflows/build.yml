@@ -32,6 +32,15 @@ jobs:
       - name: Build Next.js project
         run: pnpm build
 
+      - name: List .next directory
+        run: |
+          echo "=== .next directory contents ==="
+          ls -la .next/
+          echo "=== .next/build directory ==="
+          ls -la .next/build/ 2>/dev/null || echo "No build directory"
+          echo "=== .next/static directory ==="
+          ls -la .next/static/ 2>/dev/null || echo "No static directory"
+
       - name: Upload .next directory
         uses: actions/upload-artifact@v4
         with:
