@@ -121,116 +121,280 @@ header {
   background: var(--glass-bg, oklch(0.13 0.01 250 / 0.8)) !important;
 }
 
-/* 液体玻璃效果 - iOS 26 风格 */
-.liquid-glass-filter {
-  position: fixed;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-  z-index: -1;
+/* ============================================
+   iOS 26 液态玻璃效果 - 真正的折射与边缘反射
+   参考: Vercel 官网、iOS 26 Control Center
+   关键特性:
+   - 背景折射/位移效果 (feDisplacementMap)
+   - 边缘高光反射 (多层渐变 + box-shadow)
+   - 色差效果 (Chromatic Aberration)
+   - 动态阴影系统
+   ============================================ */
+
+/* 液态玻璃 CSS 变量 */
+.liquid-glass-enabled {
+  /* 边缘反射颜色 */
+  --lg-edge-top: rgba(255, 255, 255, 0.7);
+  --lg-edge-left: rgba(255, 255, 255, 0.5);
+  --lg-edge-bottom: rgba(0, 0, 0, 0.12);
+  --lg-edge-right: rgba(0, 0, 0, 0.08);
+  /* 镜面高光 */
+  --lg-specular: rgba(255, 255, 255, 0.95);
+  --lg-specular-soft: rgba(255, 255, 255, 0.3);
+  /* 玻璃着色 */
+  --lg-tint: rgba(255, 255, 255, 0.03);
+  /* 阴影 */
+  --lg-shadow-soft: rgba(0, 0, 0, 0.15);
+  --lg-shadow-hard: rgba(0, 0, 0, 0.25);
+  /* 色差偏移 */
+  --lg-aberration-r: 1.5px;
+  --lg-aberration-b: -1.5px;
 }
 
-/* 液体玻璃卡片效果 - iOS 26 风格，带边缘折射 */
+/* ========== 液态玻璃卡片 ========== */
 .liquid-glass-enabled .bg-card {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.15) 0%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.12) 100%
-  ) !important;
-  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-refraction)) contrast(1.08) brightness(1.02) !important;
-  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-refraction)) contrast(1.08) brightness(1.02) !important;
-  /* 边缘折射效果 */
-  border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
-  border-top: 2px solid rgba(255, 255, 255, 0.35) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
-  border-radius: 1.25rem !important;
+  /* 核心：使用 SVG 滤镜实现折射 */
+  filter: url(#liquid-glass-refraction);
+  
+  /* 背景模糊 + 饱和度增强 */
+  -webkit-backdrop-filter: 
+    blur(var(--lg-blur, 40px)) 
+    saturate(calc(var(--lg-refraction, 180) * 1%))
+    brightness(1.08)
+    contrast(1.05);
+  backdrop-filter: 
+    blur(var(--lg-blur, 40px)) 
+    saturate(calc(var(--lg-refraction, 180) * 1%))
+    brightness(1.08)
+    contrast(1.05);
+  
+  /* 玻璃材质背景 - 半透明渐变 */
+  background: 
+    /* 主体：微妙的渐变增加深度感 */
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 50%,
+      rgba(255, 255, 255, 0.05) 100%
+    ),
+    var(--lg-tint) !important;
+  
+  /* 移除默认边框 */
+  border: none !important;
+  border-radius: 1.5rem !important;
+  
+  /* 复杂阴影系统 - 模拟真实玻璃 */
   box-shadow: 
-    inset 0 1px 2px rgba(255, 255, 255, 0.3),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.08),
-    inset 1px 0 1px rgba(255, 255, 255, 0.15),
-    inset -1px 0 1px rgba(0, 0, 0, 0.05),
-    0 12px 40px rgba(0, 0, 0, 0.15),
-    0 4px 12px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+    /* ---- 外部阴影 ---- */
+    /* 主阴影 - 深度 */
+    0 20px 40px -10px var(--lg-shadow-hard),
+    0 10px 20px -5px var(--lg-shadow-soft),
+    /* 边缘发光 */
+    0 0 0 0.5px rgba(255, 255, 255, 0.2),
+    
+    /* ---- 内部阴影 (边缘反射) ---- */
+    /* 顶部高光 - 最亮 */
+    inset 0 1px 0 var(--lg-specular),
+    inset 0 2px 4px var(--lg-specular-soft),
+    /* 左侧高光 */
+    inset 1px 0 0 var(--lg-edge-left),
+    inset 2px 0 3px rgba(255, 255, 255, 0.15),
+    /* 底部暗边 */
+    inset 0 -1px 0 var(--lg-edge-bottom),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.06),
+    /* 右侧暗边 */
+    inset -1px 0 0 var(--lg-edge-right),
+    inset -2px 0 3px rgba(0, 0, 0, 0.04) !important;
+  
   position: relative;
   overflow: hidden;
+  transform-style: preserve-3d;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 液体玻璃顶部高光 */
+/* 卡片悬停 - 轻微上浮 + 阴影增强 */
+.liquid-glass-enabled .bg-card:hover {
+  transform: translateY(-3px) scale(1.005);
+  box-shadow: 
+    0 25px 50px -12px var(--lg-shadow-hard),
+    0 15px 30px -8px var(--lg-shadow-soft),
+    0 0 0 0.5px rgba(255, 255, 255, 0.25),
+    0 0 60px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 var(--lg-specular),
+    inset 0 2px 6px var(--lg-specular-soft),
+    inset 1px 0 0 var(--lg-edge-left),
+    inset 2px 0 4px rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 var(--lg-edge-bottom),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.08),
+    inset -1px 0 0 var(--lg-edge-right),
+    inset -2px 0 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* ---- 顶部边缘高光条 (镜面反射) ---- */
 .liquid-glass-enabled .bg-card::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 15%;
-  right: 15%;
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.6),
-    transparent
-  );
-  pointer-events: none;
-  filter: blur(1px);
-}
-
-/* 液体玻璃底部反光 */
-.liquid-glass-enabled .bg-card::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 20%;
-  right: 20%;
+  left: 5%;
+  right: 5%;
   height: 1px;
   background: linear-gradient(
     90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 15%,
+    rgba(255, 255, 255, 0.7) 35%,
+    rgba(255, 255, 255, 0.9) 50%,
+    rgba(255, 255, 255, 0.7) 65%,
+    rgba(255, 255, 255, 0.2) 85%,
+    transparent 100%
   );
   pointer-events: none;
-  filter: blur(0.5px);
+  z-index: 20;
+  filter: blur(0.3px);
 }
 
-/* 液体玻璃导航栏 */
+/* ---- 色差效果层 ---- */
+.liquid-glass-enabled .bg-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  /* 红蓝通道偏移模拟色差 */
+  box-shadow:
+    inset var(--lg-aberration-r) 0 0 rgba(255, 120, 120, 0.025),
+    inset var(--lg-aberration-b) 0 0 rgba(120, 120, 255, 0.025),
+    inset 0 0 30px rgba(255, 255, 255, 0.01);
+  pointer-events: none;
+  z-index: 15;
+  mix-blend-mode: screen;
+}
+
+/* ========== 液态玻璃导航栏 ========== */
 .liquid-glass-enabled header {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.15) 0%,
-    rgba(255, 255, 255, 0.08) 100%
-  ) !important;
-  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-refraction)) !important;
-  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-refraction)) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  filter: url(#liquid-glass-refraction-subtle);
+  
+  -webkit-backdrop-filter: 
+    blur(calc(var(--lg-blur, 40px) * 0.7)) 
+    saturate(calc(var(--lg-refraction, 180) * 0.85%))
+    brightness(1.05);
+  backdrop-filter: 
+    blur(calc(var(--lg-blur, 40px) * 0.7)) 
+    saturate(calc(var(--lg-refraction, 180) * 0.85%))
+    brightness(1.05);
+  
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    ) !important;
+  
+  border-bottom: none !important;
+  
   box-shadow: 
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 4px 24px rgba(0, 0, 0, 0.1) !important;
+    0 4px 25px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08) !important;
 }
 
-/* 液体玻璃按钮 - 仅主要按钮 */
-.liquid-glass-enabled button.bg-primary {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.2) 0%,
-    rgba(255, 255, 255, 0.1) 100%
-  ) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
-  backdrop-filter: blur(20px) saturate(150%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+/* ========== 液态玻璃按钮 ========== */
+.liquid-glass-enabled button.bg-primary,
+.liquid-glass-enabled a.bg-primary {
+  filter: url(#liquid-glass-refraction-subtle);
+  
+  -webkit-backdrop-filter: blur(25px) saturate(160%) brightness(1.1);
+  backdrop-filter: blur(25px) saturate(160%) brightness(1.1);
+  
+  background: 
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.04) 100%
+    ) !important;
+  
+  border: none !important;
+  
   box-shadow: 
-    inset 0 1px 1px rgba(255, 255, 255, 0.3),
-    0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    0 4px 12px rgba(0, 0, 0, 0.12),
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08),
+    inset 1px 0 0 rgba(255, 255, 255, 0.2),
+    inset -1px 0 0 rgba(0, 0, 0, 0.04) !important;
+  
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 液体玻璃输入框 */
+.liquid-glass-enabled button.bg-primary:hover,
+.liquid-glass-enabled a.bg-primary:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 
+    0 6px 18px rgba(0, 0, 0, 0.15),
+    0 3px 6px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    inset 1px 0 0 rgba(255, 255, 255, 0.25),
+    inset -1px 0 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+.liquid-glass-enabled button.bg-primary:active,
+.liquid-glass-enabled a.bg-primary:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 0.1s;
+}
+
+/* ========== 液态玻璃输入框 ========== */
 .liquid-glass-enabled input,
 .liquid-glass-enabled textarea,
 .liquid-glass-enabled select {
-  background: rgba(255, 255, 255, 0.06) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(110%);
+  backdrop-filter: blur(12px) saturate(110%);
+  
+  background: rgba(255, 255, 255, 0.04) !important;
+  
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.04),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  
+  transition: all 0.2s ease;
+}
+
+.liquid-glass-enabled input:focus,
+.liquid-glass-enabled textarea:focus,
+.liquid-glass-enabled select:focus {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.04),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 2px rgba(255, 255, 255, 0.08),
+    0 0 15px rgba(255, 255, 255, 0.03);
+}
+
+/* ========== 液态玻璃弹窗 ========== */
+.liquid-glass-enabled [role="dialog"],
+.liquid-glass-enabled .bg-popover {
+  filter: url(#liquid-glass-refraction);
+  
+  -webkit-backdrop-filter: 
+    blur(var(--lg-blur, 40px)) 
+    saturate(calc(var(--lg-refraction, 180) * 1%))
+    brightness(1.06);
+  backdrop-filter: 
+    blur(var(--lg-blur, 40px)) 
+    saturate(calc(var(--lg-refraction, 180) * 1%))
+    brightness(1.06);
+  
+  background: rgba(255, 255, 255, 0.05) !important;
+  
+  box-shadow: 
+    0 25px 50px -12px var(--lg-shadow-hard),
+    0 0 0 0.5px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06) !important;
 }
 
 /* 强制应用壁纸 - 最高优先级 */

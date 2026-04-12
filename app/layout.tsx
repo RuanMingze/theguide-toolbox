@@ -6,6 +6,7 @@ import Script from 'next/script'
 import { AuthProvider } from '@/components/auth-provider'
 import { PageProgress } from '@/components/page-progress'
 import { ServiceWorkerRegistration } from '@/components/service-worker-registration'
+import { LiquidGlassProvider } from '@/components/liquid-glass-provider'
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -41,18 +42,20 @@ export default function RootLayout({
     <html lang="zh-CN">
       <body className={`${inter.variable} font-sans antialiased`}>
         <AuthProvider>
-          <ServiceWorkerRegistration />
-          <PageProgress />
-          {children}
-          <Analytics />
-          <Script 
-            src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"
-            strategy="lazyOnload"
-          />
-          <Script 
-            src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
-            strategy="lazyOnload"
-          />
+          <LiquidGlassProvider>
+            <ServiceWorkerRegistration />
+            <PageProgress />
+            {children}
+            <Analytics />
+            <Script 
+              src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"
+              strategy="lazyOnload"
+            />
+            <Script 
+              src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+              strategy="lazyOnload"
+            />
+          </LiquidGlassProvider>
         </AuthProvider>
       </body>
     </html>
