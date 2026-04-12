@@ -5,6 +5,7 @@ import { Image, Eye, EyeOff, X, Upload, Link as LinkIcon, Sparkles, Sun, Moon } 
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 import { useTranslation } from '@/hooks/use-translation'
+import { useSettings } from '@/hooks/use-settings'
 
 const wallpapers = [
   {
@@ -41,6 +42,7 @@ const wallpapers = [
 
 export default function SettingsPage() {
   const { t, lang } = useTranslation()
+  useSettings() // 注入 SVG 滤镜并应用设置
   const [mounted, setMounted] = useState(false)
   const [wallpaper, setWallpaper] = useState<string>('')
   const [glassEffect, setGlassEffect] = useState<boolean>(true)

@@ -1,74 +1,118 @@
 import { useEffect } from 'react'
 
 // iOS 26 液态玻璃 SVG 滤镜 - 真正的折射效果
-// 使用 feDisplacementMap 实现边缘折射，feSpecularLighting 实现镜面反射
+// 核心：使用 feDisplacementMap 实现背景位移/折射
+// 边缘反射：使用 feSpecularLighting + feMorphology 边缘检测
+// 色差：使用 feOffset + feColorMatrix 实现 RGB 通道分离
 const LIQUID_GLASS_SVG = `
-<svg class="liquid-glass-svg-filters" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<svg class="liquid-glass-svg-filters" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="position:fixed;left:-9999px;top:-9999px;width:0;height:0;overflow:hidden;">
   <defs>
-    <!-- 主要折射滤镜 - 用于卡片和主要元素 -->
-    <filter id="liquid-glass-refraction" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
-      <!-- 创建边缘位移贴图 -->
-      <feGaussianBlur in="SourceAlpha" stdDeviation="8" result="blur1"/>
-      <feOffset in="blur1" dx="0" dy="0" result="offset1"/>
+    <!-- ================================================
+         主折射滤镜 - 用于卡片等主要元素
+         实现真实的边缘折射和镜面反射
+         ================================================ -->
+    <filter id="liquid-glass-refraction" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB">
       
-      <!-- 创建内部高光 -->
-      <feSpecularLighting in="blur1" surfaceScale="3" specularConstant="0.8" specularExponent="25" lighting-color="#ffffff" result="specular">
-        <fePointLight x="-100" y="-200" z="300"/>
+      <!-- Step 1: 创建边缘位移贴图 (用于折射) -->
+      <!-- 基于元素 alpha 通道生成高度图 -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="15" result="blurredAlpha"/>
+      
+      <!-- 将模糊的 alpha 转换为位移贴图 -->
+      <feColorMatrix in="blurredAlpha" type="matrix"
+        values="0 0 0 0 0.5
+                0 0 0 0 0.5
+                0 0 0 0 0.5
+                0 0 0 1 0" result="displacementMap"/>
+      
+      <!-- Step 2: 应用位移映射实现折射 -->
+      <!-- scale 控制折射强度，越大变形越明显 -->
+      <feDisplacementMap in="SourceGraphic" in2="displacementMap" 
+        scale="25" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+      
+      <!-- Step 3: 边缘检测 - 创建边缘高光 -->
+      <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="dilated"/>
+      <feMorphology in="SourceAlpha" operator="erode" radius="2" result="eroded"/>
+      <feComposite in="dilated" in2="eroded" operator="out" result="edge"/>
+      <feGaussianBlur in="edge" stdDeviation="3" result="edgeBlur"/>
+      
+      <!-- 边缘高光着色 - 白色发光 -->
+      <feColorMatrix in="edgeBlur" type="matrix"
+        values="0 0 0 0 1
+                0 0 0 0 1
+                0 0 0 0 1
+                0 0 0 0.5 0" result="edgeHighlight"/>
+      
+      <!-- Step 4: 镜面反射 (Specular Lighting) -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="8" result="specBlur"/>
+      <feSpecularLighting in="specBlur" surfaceScale="4" specularConstant="1" specularExponent="20" lighting-color="#ffffff" result="specular">
+        <!-- 光源位置：左上方 -->
+        <fePointLight x="-200" y="-300" z="400"/>
       </feSpecularLighting>
-      
-      <!-- 边缘检测 -->
-      <feMorphology in="SourceAlpha" operator="dilate" radius="1" result="dilated"/>
-      <feMorphology in="SourceAlpha" operator="erode" radius="1" result="eroded"/>
-      <feComposite in="dilated" in2="eroded" operator="xor" result="edge"/>
-      
-      <!-- 边缘高光 -->
-      <feGaussianBlur in="edge" stdDeviation="2" result="edgeBlur"/>
-      <feColorMatrix in="edgeBlur" type="matrix" 
-        values="1 0 0 0 0.3
-                0 1 0 0 0.3
-                0 0 1 0 0.3
-                0 0 0 0.6 0" result="edgeLight"/>
-      
-      <!-- 合成折射效果 -->
       <feComposite in="specular" in2="SourceAlpha" operator="in" result="specularMasked"/>
-      <feBlend in="SourceGraphic" in2="specularMasked" mode="screen" result="withSpecular"/>
-      <feBlend in="withSpecular" in2="edgeLight" mode="screen" result="final"/>
       
-      <!-- 添加轻微色差 -->
-      <feOffset in="final" dx="0.5" dy="0" result="redShift"/>
-      <feOffset in="final" dx="-0.5" dy="0" result="blueShift"/>
-      <feColorMatrix in="redShift" type="matrix"
+      <!-- Step 5: 色差效果 (Chromatic Aberration) -->
+      <!-- 红色通道向右偏移 -->
+      <feOffset in="displaced" dx="1.5" dy="0" result="redChannel"/>
+      <feColorMatrix in="redChannel" type="matrix"
         values="1 0 0 0 0
                 0 0 0 0 0
                 0 0 0 0 0
-                0 0 0 0.1 0" result="red"/>
-      <feColorMatrix in="blueShift" type="matrix"
+                0 0 0 0.08 0" result="redOnly"/>
+      
+      <!-- 蓝色通道向左偏移 -->
+      <feOffset in="displaced" dx="-1.5" dy="0" result="blueChannel"/>
+      <feColorMatrix in="blueChannel" type="matrix"
         values="0 0 0 0 0
                 0 0 0 0 0
                 0 0 1 0 0
-                0 0 0 0.1 0" result="blue"/>
-      <feBlend in="final" in2="red" mode="screen" result="withRed"/>
-      <feBlend in="withRed" in2="blue" mode="screen"/>
+                0 0 0 0.08 0" result="blueOnly"/>
+      
+      <!-- Step 6: 合成所有效果 -->
+      <!-- 基础图像 + 色差 -->
+      <feBlend in="displaced" in2="redOnly" mode="screen" result="withRed"/>
+      <feBlend in="withRed" in2="blueOnly" mode="screen" result="withAberration"/>
+      
+      <!-- 添加边缘高光 -->
+      <feBlend in="withAberration" in2="edgeHighlight" mode="screen" result="withEdge"/>
+      
+      <!-- 添加镜面反射 -->
+      <feBlend in="withEdge" in2="specularMasked" mode="screen"/>
     </filter>
-    
-    <!-- 轻量折射滤镜 - 用于按钮和小元素 -->
-    <filter id="liquid-glass-refraction-subtle" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur"/>
-      <feSpecularLighting in="blur" surfaceScale="2" specularConstant="0.6" specularExponent="30" lighting-color="#ffffff" result="specular">
-        <fePointLight x="-50" y="-100" z="200"/>
-      </feSpecularLighting>
-      <feComposite in="specular" in2="SourceAlpha" operator="in" result="specularMasked"/>
-      <feBlend in="SourceGraphic" in2="specularMasked" mode="screen"/>
-    </filter>
-    
-    <!-- 边缘光晕滤镜 -->
-    <filter id="liquid-glass-glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="10" result="blur"/>
+
+    <!-- ================================================
+         轻量折射滤镜 - 用于按钮和导航栏
+         ================================================ -->
+    <filter id="liquid-glass-refraction-subtle" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+      <!-- 简化的位移效果 -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="8" result="blur"/>
       <feColorMatrix in="blur" type="matrix"
-        values="1 0 0 0 1
-                0 1 0 0 1
-                0 0 1 0 1
-                0 0 0 0.15 0"/>
+        values="0 0 0 0 0.5
+                0 0 0 0 0.5
+                0 0 0 0 0.5
+                0 0 0 1 0" result="dispMap"/>
+      <feDisplacementMap in="SourceGraphic" in2="dispMap" 
+        scale="12" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+      
+      <!-- 简化的镜面反射 -->
+      <feSpecularLighting in="blur" surfaceScale="2" specularConstant="0.7" specularExponent="25" lighting-color="#ffffff" result="specular">
+        <fePointLight x="-100" y="-150" z="250"/>
+      </feSpecularLighting>
+      <feComposite in="specular" in2="SourceAlpha" operator="in" result="specMasked"/>
+      
+      <!-- 合成 -->
+      <feBlend in="displaced" in2="specMasked" mode="screen"/>
+    </filter>
+
+    <!-- ================================================
+         边缘发光滤镜 - 用于悬停效果
+         ================================================ -->
+    <filter id="liquid-glass-glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="15" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="0 0 0 0 1
+                0 0 0 0 1
+                0 0 0 0 1
+                0 0 0 0.2 0"/>
     </filter>
   </defs>
 </svg>
