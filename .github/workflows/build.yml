@@ -28,13 +28,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        env:
-          NODE_ENV: production
 
       - name: Build Next.js project
         run: pnpm build
-        env:
-          NODE_ENV: production
 
       - name: Upload .next directory
         uses: actions/upload-artifact@v4
