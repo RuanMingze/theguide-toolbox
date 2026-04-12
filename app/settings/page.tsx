@@ -469,7 +469,7 @@ export default function SettingsPage() {
                     </span>
                   </h2>
                   <p className="text-xs text-muted-foreground">
-                    {lang === 'en' ? 'iOS 26 style liquid glass effect' : 'iOS 26 风格的液体玻璃效果'}
+                    {lang === 'en' ? 'Real refraction & edge reflection like iOS 26' : '真实折射与边缘反射，还原 iOS 26 效果'}
                   </p>
                 </div>
               </div>
@@ -553,8 +553,8 @@ export default function SettingsPage() {
 
                 <p className="text-xs text-muted-foreground">
                   {lang === 'en'
-                    ? 'Frosted glass has been automatically disabled.'
-                    : '毛玻璃效果已自动关闭。'}
+                    ? 'Liquid Glass uses SVG filters for realistic refraction and edge reflection effects. Frosted glass has been automatically disabled.'
+                    : '液态玻璃使用 SVG 滤镜实现真实的折射和边缘反射效果。毛玻璃效果已自动关闭。'}
                 </p>
               </div>
             )}
