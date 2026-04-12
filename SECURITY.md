@@ -28,12 +28,12 @@
 ### 4. 环境变量（.env.local）
 ```env
 # 公开信息（可暴露）
-RUANM_OAUTH_CLIENT_ID=yodhcgx4smnofbv4ulpp3vfxozd4171q
 RUANM_OAUTH_REDIRECT_URI=https://theguide.ruanmgjx.dpdns.org/callback
 RUANM_OAUTH_BASE_URL=https://ruanmgjx.dpdns.org
 
 # 机密信息（严禁暴露）
 RUANM_OAUTH_CLIENT_SECRET=*** 已加密存储 ***
+RUANM_OAUTH_CLIENT_ID=*** 已加密存储 ***
 ```
 
 ## 安全最佳实践
