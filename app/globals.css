@@ -156,15 +156,15 @@ header {
   /* 核心：使用 SVG 滤镜实现折射 */
   filter: url(#liquid-glass-refraction);
   
-  /* 背景模糊 + 饱和度增强 */
+  /* 背景模糊 + 饱和度增强 - 仅用于不支持 SVG 滤镜的浏览器 */
   -webkit-backdrop-filter: 
     blur(var(--lg-blur, 40px)) 
-    saturate(calc(var(--lg-refraction, 180) * 1%))
+    saturate(180%)
     brightness(1.08)
     contrast(1.05);
   backdrop-filter: 
     blur(var(--lg-blur, 40px)) 
-    saturate(calc(var(--lg-refraction, 180) * 1%))
+    saturate(180%)
     brightness(1.08)
     contrast(1.05);
   
@@ -276,11 +276,11 @@ header {
   
   -webkit-backdrop-filter: 
     blur(calc(var(--lg-blur, 40px) * 0.7)) 
-    saturate(calc(var(--lg-refraction, 180) * 0.85%))
+    saturate(150%)
     brightness(1.05);
   backdrop-filter: 
     blur(calc(var(--lg-blur, 40px) * 0.7)) 
-    saturate(calc(var(--lg-refraction, 180) * 0.85%))
+    saturate(150%)
     brightness(1.05);
   
   background: 

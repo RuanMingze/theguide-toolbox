@@ -145,7 +145,7 @@ export default function SettingsPage() {
       // 液体玻璃启用时，关闭毛玻璃
       body.classList.add('liquid-glass-enabled')
       root.style.setProperty('--lg-blur', `${liquidBlur}px`)
-      root.style.setProperty('--lg-refraction', `${liquidRefraction}%`)
+      root.style.setProperty('--lg-refraction', `${liquidRefraction}`)
       root.style.removeProperty('--glass-bg')
       root.style.removeProperty('--glass-blur')
       console.log('[SettingsPage] Liquid glass enabled')
