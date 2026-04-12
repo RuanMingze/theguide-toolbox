@@ -58,11 +58,7 @@
 - 实时时钟 - 显示当前时间和日期
 - 日历 - 查看日历信息
 - 天气预报 - 自动定位获取天气信息（支持 OpenWeather API）
-
-### 🤖 AI 功能
-- WorkersAI 集成 - 集成 Cloudflare Workers AI 服务
-- Qwen 对话 - 调用通义千问（Qwen2.5-7B-Instruct）模型进行智能对话
-
+- 
 ## 🚀 技术栈
 
 - **框架**: Next.js 16.2.0
