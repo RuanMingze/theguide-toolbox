@@ -2403,13 +2403,23 @@ function IpLookupTool() {
     setResult(null)
     
     try {
-      const res = await fetch(`https://ip-api.com/json/${ip.trim()}`)
+      const res = await fetch(`https://ipwhois.app/json/${ip.trim()}`)
       const data = await res.json()
       
-      if (data.status === 'fail') {
+      if (data.success === false) {
         setError(data.message || (lang === 'en' ? "Lookup failed" : "查询失败"))
       } else {
-        setResult(data)
+        setResult({
+          query: data.ip,
+          country: data.country,
+          regionName: data.region,
+          city: data.city,
+          isp: data.isp,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          timezone: data.timezone,
+          postal: data.postal || ''
+        })
       }
     } catch (err) {
       setError(lang === 'en' ? "Network error" : "网络错误")

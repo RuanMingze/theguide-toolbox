@@ -208,7 +208,6 @@ export const englishTranslations: Record<string, string> = {
   '节日快乐！': 'Happy holiday!',
   
   // 设置
-  '设置': 'Settings',
   '自定义您的个性化设置': 'Customize your personal settings',
   '壁纸设置': 'Wallpaper',
   '无': 'None',

@@ -370,27 +370,86 @@ function Weather({ lang, userLocation }: { lang: string; userLocation: string | 
       return
     }
     
-    // 否则使用 ip-api.com 获取位置
+    // 使用多个备选方案获取位置（按优先级尝试）
     const fetchLocation = async () => {
+      // 方案 1: 优先使用后端 API（服务端调用没有 CORS 限制）
       try {
-        const res = await fetch('https://ip-api.com/json/?lang=zh-CN')
-        if (!res.ok) {
-          throw new Error("Failed to fetch location from ip-api")
-        }
-        const data = await res.json()
-        if (data.status === 'success') {
-          // 使用经纬度坐标，更准确
-          const location = `${data.lat},${data.lon}`
-          console.log("Location from ip-api:", location)
-          setLocation(location)
+        console.log('Trying backend IP location API...')
+        const res = await fetch('/api/ip-location')
+        
+        if (res.ok) {
+          const data = await res.json()
+          
+          if (data.success && data.latitude && data.longitude) {
+            const location = `${data.latitude},${data.longitude}`
+            console.log(`Location from backend API (${data.source}):`, location)
+            setLocation(location)
+            return // 成功，直接返回
+          } else {
+            console.warn('Backend API returned invalid data:', data)
+          }
         } else {
-          console.error("ip-api returned error:", data)
-          setLocation('Beijing')
+          console.warn('Backend API failed with status:', res.status)
         }
       } catch (error) {
-        console.error("Location fetch error:", error)
-        setLocation('Beijing')
+        console.warn('Backend API error:', error)
+        // 继续尝试其他方案
       }
+
+      // 方案 2: 使用 geoip0 npm 包进行本地 IP 定位（无需 API Key）
+      try {
+        console.log('Trying geoip0 (npm package)...')
+        const geoip0Module = await import('geoip0')
+        
+        // 检查正确的导出方式
+        const GeoIP0 = geoip0Module.default || geoip0Module.geoip0
+        
+        if (!GeoIP0) {
+          console.warn('geoip0 module not found')
+        } else {
+          const geo = new GeoIP0()
+          const result = await geo.lookup()
+          
+          if (result && result.latitude && result.longitude) {
+            const location = `${result.latitude},${result.longitude}`
+            console.log('Location from geoip0:', location)
+            setLocation(location)
+            return // 成功，直接返回
+          } else {
+            console.warn('geoip0 returned invalid data')
+          }
+        }
+      } catch (error) {
+        console.warn('geoip0 error:', error)
+        // 继续尝试其他方案
+      }
+
+      // 方案 3: 最后尝试浏览器 GPS 定位
+      if ('geolocation' in navigator) {
+        try {
+          console.log('Trying browser GPS (last resort)...')
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: false, // 不强制高精度（避免手机端问题）
+              timeout: 5000,             // 5 秒超时
+              maximumAge: 300000         // 使用 5 分钟内的缓存
+            })
+          })
+          
+          const { latitude, longitude } = position.coords
+          console.log('GPS location:', `${latitude},${longitude}`)
+          setLocation(`${latitude},${longitude}`)
+          return // GPS 成功，直接返回
+        } catch (error) {
+          console.warn('GPS failed:', error)
+        }
+      } else {
+        console.log('Browser does not support geolocation')
+      }
+      
+      // 所有方法都失败，使用默认值
+      console.warn("All location methods failed, using default location: Beijing")
+      setLocation('Beijing')
     }
     
     fetchLocation()

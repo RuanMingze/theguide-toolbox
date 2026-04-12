@@ -1,83 +1,116 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createGeoIPManager } from "geoip0"
-import ipsbDriver from "geoip0/drivers/ipsb"
-import cloudflareDriver from "geoip0/drivers/cloudflare"
-import hybridDriver from "geoip0/drivers/hybrid"
 
 export const runtime = "edge"
 
-interface IpInfoResponse {
-  ip: string
-  city: string
-  region: string
-  country: string
-  loc: string
-  timezone: string
-}
-
-// 创建 GeoIP 管理器，使用混合驱动（自动故障转移）
-const geoipManager = createGeoIPManager({
-  driver: hybridDriver({
-    drivers: [
-      ipsbDriver(),
-      cloudflareDriver(),
-    ],
-  }),
-})
-
 export async function GET(request: NextRequest) {
   try {
-    // 获取客户端 IP
+    // 获取客户端 IP 地址
     const forwarded = request.headers.get("x-forwarded-for")
-    const ip = forwarded 
-      ? forwarded.split(",")[0].trim() 
-      : request.headers.get("x-real-ip") || "unknown"
-
-    // 如果是本地地址，直接返回默认位置
-    if (ip === "localhost" || ip === "127.0.0.1" || ip === "::1") {
-      return NextResponse.json({
-        city: "Deqing",
-        region: "Zhejiang",
-        country: "CN",
-        loc: "30.4424,120.0816",
-        timezone: "Asia/Shanghai"
-      })
-    }
-
-    // 使用 geoip0 获取位置信息
-    const location = await geoipManager.lookup(ip)
-
-    if (!location || !location.latitude || !location.longitude) {
-      throw new Error("Invalid location data from geoip0")
-    }
-
-    // 构建响应数据
-    const city = location.city || "Deqing"
-    const region = location.region || ""
-    const country = location.country || "CN"
-    const loc = `${location.latitude},${location.longitude}`
-    const timezone = location.timezone || "Asia/Shanghai"
-
-    console.log("IP location from geoip0:", { ip, city, region, country, loc })
-
-    return NextResponse.json({
-      city,
-      region,
-      country,
-      loc,
-      timezone
-    })
-
-  } catch (error) {
-    console.error("IP location fetch error:", error)
+    const ip = forwarded ? forwarded.split(",")[0].trim() : "unknown"
     
-    // 任何错误都返回默认位置
+    console.log("IP location request from:", ip)
+    
+    // 使用多个 IP 定位 API（服务端调用没有 CORS 限制）
+    const apiEndpoints = [
+      {
+        name: 'ipwhois.app',
+        url: 'https://ipwhois.app/json/',
+        parse: (data: any) => ({
+          lat: data.latitude,
+          lon: data.longitude,
+          success: data.success === true
+        })
+      },
+      {
+        name: 'ipapi.co',
+        url: 'https://ipapi.co/json/',
+        parse: (data: any) => ({
+          lat: data.latitude,
+          lon: data.longitude,
+          success: !data.error
+        })
+      },
+      {
+        name: 'ip-api.com',
+        url: 'http://ip-api.com/json/?lang=zh-CN',
+        parse: (data: any) => ({
+          lat: data.lat,
+          lon: data.lon,
+          success: data.status === 'success'
+        })
+      },
+      {
+        name: 'ip.useragentinfo.com',
+        url: 'https://ip.useragentinfo.com/json',
+        parse: (data: any) => ({
+          lat: data.lat || 39.9042,
+          lon: data.lng || 116.4074,
+          success: data.code === 200
+        })
+      },
+      {
+        name: 'api.vore.top',
+        url: 'https://api.vore.top/api/IPdata',
+        parse: (data: any) => {
+          const lat = data.ipdata?.lat || 39.9042
+          const lon = data.ipdata?.lng || 116.4074
+          return { lat, lon, success: data.code === 200 }
+        }
+      }
+    ]
+    
+    // 依次尝试各个 API
+    for (const api of apiEndpoints) {
+      try {
+        console.log(`Trying ${api.name}...`)
+        const res = await fetch(api.url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          }
+        })
+        
+        if (!res.ok) {
+          console.warn(`${api.name} failed with status ${res.status}`)
+          continue
+        }
+        
+        const data = await res.json()
+        const result = api.parse(data)
+        
+        if (result.success && result.lat && result.lon) {
+          console.log(`Location from ${api.name}: ${result.lat},${result.lon}`)
+          return NextResponse.json({
+            success: true,
+            latitude: result.lat,
+            longitude: result.lon,
+            source: api.name
+          })
+        } else {
+          console.warn(`${api.name} returned invalid data:`, data)
+        }
+      } catch (error) {
+        console.warn(`${api.name} error:`, error)
+        // 继续尝试下一个 API
+      }
+    }
+    
+    // 所有 API 都失败
+    console.warn("All IP location APIs failed")
     return NextResponse.json({
-      city: "Deqing",
-      region: "Zhejiang",
-      country: "CN",
-      loc: "30.4424,120.0816",
-      timezone: "Asia/Shanghai"
+      success: false,
+      error: "All location APIs failed",
+      latitude: 39.9042,
+      longitude: 116.4074
     })
+    
+  } catch (error) {
+    console.error("IP location API error:", error)
+    return NextResponse.json({
+      success: false,
+      error: "Internal server error",
+      latitude: 39.9042,
+      longitude: 116.4074
+    }, { status: 500 })
   }
 }
