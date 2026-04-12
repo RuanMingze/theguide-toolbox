@@ -31,25 +31,25 @@ jobs:
 
       - name: Build Next.js project
         run: pnpm build
+        working-directory: ${{ github.workspace }}
 
       - name: List .next directory
         run: |
           echo "=== .next directory contents ==="
-          ls -la .next/
+          ls -la ${{ github.workspace }}/.next/
           echo "=== .next/build directory ==="
-          ls -la .next/build/ 2>/dev/null || echo "No build directory"
+          ls -la ${{ github.workspace }}/.next/build/ 2>/dev/null || echo "No build directory"
           echo "=== .next/static directory ==="
-          ls -la .next/static/ 2>/dev/null || echo "No static directory"
+          ls -la ${{ github.workspace }}/.next/static/ 2>/dev/null || echo "No static directory"
 
       - name: Upload .next directory
         uses: actions/upload-artifact@v4
         with:
           name: next-build-output
-          path: |
-            .next/*
-            .next/**/*
+          path: ${{ github.workspace }}/.next
           retention-days: 14
           if-no-files-found: warn
+          include-hidden-files: true
 
       - name: Create production bundle
         run: |
@@ -58,12 +58,13 @@ jobs:
             public/ \
             package.json \
             pnpm-lock.yaml
+        working-directory: ${{ github.workspace }}
 
       - name: Upload production bundle
         uses: actions/upload-artifact@v4
         with:
           name: next-production-bundle
-          path: next-production-bundle.tar.gz
+          path: ${{ github.workspace }}/next-production-bundle.tar.gz
           retention-days: 14
           if-no-files-found: error
 
