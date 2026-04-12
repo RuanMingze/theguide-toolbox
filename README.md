@@ -109,8 +109,6 @@ GITHUB_OAUTH_CLIENT_ID=your_github_client_id
 GITHUB_OAUTH_CLIENT_SECRET=your_github_client_secret
 GITHUB_OAUTH_REDIRECT_URI=https://your-domain.com/githubcallback
 
-# WorkersAI (用于 AI 对话功能)
-# 在 Cloudflare Pages 中绑定 Workers AI 资源集，名称为 WORKERS_AI_ENV
 ```
 
 获取 API Key: [OpenWeather](https://openweathermap.org/api)
