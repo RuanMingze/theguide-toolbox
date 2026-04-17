@@ -41,9 +41,20 @@ export async function POST(request: NextRequest) {
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.json()
-      console.error('Discord token exchange failed:', errorData)
+      console.error('Discord token exchange failed:', {
+        status: tokenResponse.status,
+        statusText: tokenResponse.statusText,
+        error: errorData,
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        code_length: code?.length,
+      })
       return NextResponse.json(
-        { error: 'Failed to exchange authorization code' },
+        { 
+          error: 'Failed to exchange authorization code',
+          details: errorData,
+          status: tokenResponse.status,
+        },
         { status: 400 }
       )
     }
