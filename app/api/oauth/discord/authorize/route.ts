@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 
+export const runtime = 'edge'
+
 export async function GET(request: NextRequest) {
   try {
     const clientId = process.env.DISCORD_OAUTH_CLIENT_ID
