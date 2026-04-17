@@ -17,10 +17,30 @@ export async function POST(request: NextRequest) {
     const clientSecret = process.env.DISCORD_OAUTH_CLIENT_SECRET
     const redirectUri = process.env.DISCORD_OAUTH_REDIRECT_URI
 
+    console.log('Discord OAuth Environment Check:', {
+      has_client_id: !!clientId,
+      has_client_secret: !!clientSecret,
+      has_redirect_uri: !!redirectUri,
+      client_id: clientId ? `${clientId.substring(0, 5)}...` : 'undefined',
+      client_secret_length: clientSecret?.length || 0,
+      redirect_uri: redirectUri || 'undefined',
+    })
+
     if (!clientId || !clientSecret || !redirectUri) {
-      console.error('Discord OAuth configuration missing')
+      console.error('Discord OAuth configuration missing:', {
+        missing_client_id: !clientId,
+        missing_client_secret: !clientSecret,
+        missing_redirect_uri: !redirectUri,
+      })
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { 
+          error: 'Server configuration error',
+          missing: {
+            client_id: !clientId,
+            client_secret: !clientSecret,
+            redirect_uri: !redirectUri,
+          }
+        },
         { status: 500 }
       )
     }
@@ -37,6 +57,14 @@ export async function POST(request: NextRequest) {
         code: code,
         redirect_uri: redirectUri,
       }),
+    }).catch((fetchError) => {
+      console.error('Fetch to Discord API failed:', {
+        error: fetchError,
+        message: fetchError?.message,
+        cause: fetchError?.cause,
+        name: fetchError?.name,
+      })
+      throw fetchError
     })
 
     if (!tokenResponse.ok) {
@@ -103,9 +131,17 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error('Discord callback error:', error)
+    console.error('Discord callback error:', {
+      error: error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      name: error instanceof Error ? error.name : 'Unknown',
+      stack: error instanceof Error ? error.stack : undefined,
+    })
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { 
+        error: error instanceof Error ? error.message : 'Internal server error',
+        details: error instanceof Error ? { name: error.name, message: error.message } : undefined
+      },
       { status: 500 }
     )
   }

@@ -42,9 +42,14 @@ function DiscordCallbackContent() {
         })
 
         const data = await response.json()
+        
+        console.error('Discord callback response:', {
+          status: response.status,
+          data,
+        })
 
         if (!response.ok) {
-          throw new Error(data.error || 'Authentication failed')
+          throw new Error(data.error || data.details?.error || `HTTP ${response.status}: ${JSON.stringify(data)}`)
         }
 
         setUserData(data.user)
