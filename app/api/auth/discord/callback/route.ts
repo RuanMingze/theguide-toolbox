@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const clientId = process.env.DISCORD_OAUTH_CLIENT_ID
-    const clientSecret = process.env.DISCORD_OAUTH_CLIENT_SECRET_PUBLIC
+    const clientSecret = process.env.DISCORD_OAUTH_CLIENT_SECRET
     const redirectUri = process.env.DISCORD_OAUTH_REDIRECT_URI
 
     if (!clientId || !clientSecret || !redirectUri) {
