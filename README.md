@@ -58,11 +58,7 @@
 - 实时时钟 - 显示当前时间和日期
 - 日历 - 查看日历信息
 - 天气预报 - 自动定位获取天气信息（支持 OpenWeather API）
-
-### 🤖 AI 功能
-- WorkersAI 集成 - 集成 Cloudflare Workers AI 服务
-- Qwen 对话 - 调用通义千问（Qwen2.5-7B-Instruct）模型进行智能对话
-
+- 
 ## 🚀 技术栈
 
 - **框架**: Next.js 16.2.0
@@ -113,8 +109,6 @@ GITHUB_OAUTH_CLIENT_ID=your_github_client_id
 GITHUB_OAUTH_CLIENT_SECRET=your_github_client_secret
 GITHUB_OAUTH_REDIRECT_URI=https://your-domain.com/githubcallback
 
-# WorkersAI (用于 AI 对话功能)
-# 在 Cloudflare Pages 中绑定 Workers AI 资源集，名称为 WORKERS_AI_ENV
 ```
 
 获取 API Key: [OpenWeather](https://openweathermap.org/api)
