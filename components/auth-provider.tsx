@@ -8,11 +8,13 @@ interface UserProfile {
   email: string
   avatar_url: string
   has_beta_access: boolean
-  provider?: 'ruanm' | 'github'
+  provider?: 'ruanm' | 'github' | 'discord'
   github_login?: string
+  discord_username?: string
+  discord_discriminator?: string
 }
 
-export type LoginMethod = 'ruanm' | 'github'
+export type LoginMethod = 'ruanm' | 'github' | 'discord'
 
 interface AuthContextType {
   user: UserProfile | null
@@ -108,6 +110,18 @@ function AuthProviderContent({ children }: { children: ReactNode }) {
           window.location.href = data.authUrl
         } else {
           console.error('No GitHub authUrl in response')
+        }
+        return
+      }
+      
+      if (method === 'discord') {
+        const response = await fetch('/api/oauth/discord/authorize')
+        const data = await response.json()
+        
+        if (data.authUrl) {
+          window.location.href = data.authUrl
+        } else {
+          console.error('No Discord authUrl in response')
         }
         return
       }

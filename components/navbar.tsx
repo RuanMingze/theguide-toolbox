@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Compass, Wrench, Menu, X, LogIn, LogOut, User, ChevronDown, ExternalLink, Heart, Settings, Github } from "lucide-react"
+import { Home, Compass, Wrench, Menu, X, LogIn, LogOut, User, ChevronDown, ExternalLink, Heart, Settings, Github, MessageSquare } from "lucide-react"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth-provider"
@@ -193,6 +193,21 @@ export function Navbar() {
                       <div className="flex-1 text-left">
                         <p className="text-sm font-medium text-foreground">GitHub 登录</p>
                         <p className="text-xs text-muted-foreground">使用您的 GitHub 账号登录</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        login('discord')
+                        setLoginDialogOpen(false)
+                      }}
+                      className="flex w-full items-center gap-3 rounded-lg border border-border bg-background p-4 transition-colors hover:bg-accent"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#5865F2] text-white">
+                        <MessageSquare className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Discord 登录</p>
+                        <p className="text-xs text-muted-foreground">使用您的 Discord 账号登录</p>
                       </div>
                     </button>
                   </div>
