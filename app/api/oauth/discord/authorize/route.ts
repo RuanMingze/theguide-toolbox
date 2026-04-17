@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { randomUUID } from 'crypto'
 
 export const runtime = 'edge'
+
+function generateState(): string {
+  const array = new Uint8Array(16)
+  crypto.getRandomValues(array)
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +21,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const state = randomUUID()
+    const state = generateState()
     
     const authUrl = new URL('https://discord.com/api/oauth2/authorize')
     authUrl.searchParams.set('client_id', clientId)
