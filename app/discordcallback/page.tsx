@@ -52,6 +52,22 @@ function DiscordCallbackContent() {
           throw new Error(data.error || data.details?.error || `HTTP ${response.status}: ${JSON.stringify(data)}`)
         }
 
+        // 保存用户信息到本地存储
+        const userProfile = {
+          id: data.user.id,
+          name: data.user.username,
+          email: data.user.email || '',
+          avatar_url: data.user.avatar ? `https://cdn.discordapp.com/avatars/${data.user.id}/${data.user.avatar}.png` : '',
+          has_beta_access: false,
+          provider: 'discord' as const,
+          discord_username: data.user.username,
+          discord_discriminator: data.user.discriminator,
+        }
+        
+        localStorage.setItem('oauth_user', JSON.stringify(userProfile))
+        localStorage.setItem('oauth_logged_in', 'true')
+        localStorage.setItem('oauth_provider', 'discord')
+
         setUserData(data.user)
         setStatus('success')
 
@@ -61,7 +77,7 @@ function DiscordCallbackContent() {
       } catch (err) {
         console.error('Discord callback error:', err)
         setStatus('error')
-        setErrorMessage(err instanceof Error ? err.message : 'Unknown error occurred')
+        setErrorMessage(err instanceof Error ? err.message : '发生未知错误')
       }
     }
 
@@ -87,13 +103,13 @@ function DiscordCallbackContent() {
           {status === 'loading' && (
             <>
               <h1 className="text-2xl font-bold text-white text-center mb-4">
-                Connecting to Discord...
+                正在连接到 Discord...
               </h1>
               <div className="flex justify-center mb-6">
                 <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
               </div>
               <p className="text-white/80 text-center">
-                Please wait while we complete your authentication
+                请稍候，我们正在完成您的身份验证
               </p>
             </>
           )}
@@ -118,7 +134,7 @@ function DiscordCallbackContent() {
                 </div>
               </div>
               <h1 className="text-2xl font-bold text-white text-center mb-4">
-                Successfully Connected!
+                连接成功！
               </h1>
               {userData && (
                 <div className="bg-white/10 rounded-lg p-4 mb-4">
@@ -139,14 +155,14 @@ function DiscordCallbackContent() {
                         {userData.username}#{userData.discriminator}
                       </p>
                       <p className="text-white/60 text-sm">
-                        {userData.email || 'No email provided'}
+                        {userData.email || '未提供邮箱'}
                       </p>
                     </div>
                   </div>
                 </div>
               )}
               <p className="text-white/80 text-center">
-                Redirecting to homepage...
+                正在跳转回首页...
               </p>
             </>
           )}
@@ -171,7 +187,7 @@ function DiscordCallbackContent() {
                 </div>
               </div>
               <h1 className="text-2xl font-bold text-white text-center mb-4">
-                Connection Failed
+                连接失败
               </h1>
               <p className="text-white/80 text-center mb-6">
                 {errorMessage}
@@ -181,13 +197,13 @@ function DiscordCallbackContent() {
                   href="/"
                   className="flex-1 bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-4 rounded-lg transition-colors text-center"
                 >
-                  Back to Home
+                  回到首页
                 </Link>
                 <button
                   onClick={() => router.push('/')}
                   className="flex-1 bg-white hover:bg-gray-100 text-indigo-600 font-semibold py-3 px-4 rounded-lg transition-colors"
                 >
-                  Try Again
+                  再试一次
                 </button>
               </div>
             </>
@@ -197,13 +213,13 @@ function DiscordCallbackContent() {
         {/* Additional Info */}
         <div className="mt-6 text-center">
           <p className="text-white/60 text-sm">
-            By continuing, you agree to our{' '}
+            继续即表示您同意我们的{' '}
             <Link href="/terms" className="text-white/80 hover:text-white underline">
-              Terms of Service
+              服务条款
             </Link>
-            {' '}(and){' '}
+            {' '}和{' '}
             <Link href="/privacy" className="text-white/80 hover:text-white underline">
-              Privacy Policy
+              隐私政策
             </Link>
           </p>
         </div>
