@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自由工具开发指南 - TheGuide 工具箱</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --background: oklch(0.13 0.01 250);
+      --foreground: oklch(0.95 0.005 250);
+      --card: oklch(0.17 0.01 250);
+      --card-foreground: oklch(0.95 0.005 250);
+      --primary: oklch(0.646 0.222 41.116);
+      --primary-foreground: oklch(0.13 0.01 250);
+      --secondary: oklch(0.22 0.01 250);
+      --secondary-foreground: oklch(0.95 0.005 250);
+      --muted: oklch(0.22 0.01 250);
+      --muted-foreground: oklch(0.65 0.02 250);
+      --accent: oklch(0.6 0.18 180);
+      --accent-foreground: oklch(0.13 0.01 250);
+      --destructive: oklch(0.396 0.141 25.723);
+      --destructive-foreground: oklch(0.637 0.237 25.331);
+      --border: oklch(0.25 0.01 250);
+      --input: oklch(0.22 0.01 250);
+      --ring: oklch(0.646 0.222 41.116);
+      --radius: 0.75rem;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+      background-color: var(--background);
+      color: var(--foreground);
+      line-height: 1.6;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      padding: 3rem 2rem;
+      border-radius: var(--radius);
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--primary-foreground);
+    }
+
+    header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      color: var(--primary-foreground);
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      margin-top: 1rem;
+      backdrop-filter: blur(10px);
+    }
+
+    nav {
+      background: var(--card);
+      padding: 1rem 2rem;
+      border-radius: var(--radius);
+      margin-bottom: 2rem;
+      border: 1px solid var(--border);
+      position: sticky;
+      top: 1rem;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    nav a {
+      color: var(--foreground);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: calc(var(--radius) / 2);
+      transition: all 0.2s;
+      display: block;
+    }
+
+    nav a:hover {
+      background: var(--secondary);
+      color: var(--primary);
+    }
+
+    section {
+      background: var(--card);
+      padding: 2rem;
+      border-radius: var(--radius);
+      margin-bottom: 2rem;
+      border: 1px solid var(--border);
+    }
+
+    section h2 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    section h2::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 1.75rem;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    section h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 1.5rem 0 1rem;
+      color: var(--foreground);
+    }
+
+    p {
+      margin-bottom: 1rem;
+      color: var(--muted-foreground);
+    }
+
+    ul, ol {
+      margin: 1rem 0;
+      padding-left: 2rem;
+      color: var(--muted-foreground);
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    .code-block {
+      background: var(--background);
+      padding: 1.5rem;
+      border-radius: calc(var(--radius) / 2);
+      overflow-x: auto;
+      margin: 1rem 0;
+      border: 1px solid var(--border);
+      font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+      font-size: 0.875rem;
+      line-height: 1.7;
+      position: relative;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      word-break: break-all;
+      white-space: pre-wrap;
+      white-space: -moz-pre-wrap;
+      white-space: -pre-wrap;
+      white-space: -o-pre-wrap;
+    }
+
+    .code-block code {
+      color: var(--foreground);
+      display: block;
+    }
+
+    .copy-button {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      padding: 0.5rem 1rem;
+      background: var(--secondary);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) / 2);
+      color: var(--foreground);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      z-index: 10;
+    }
+
+    .copy-button:hover {
+      background: var(--primary);
+      color: var(--primary-foreground);
+      border-color: var(--primary);
+    }
+
+    .copy-button.copied {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .info-box {
+      background: linear-gradient(135deg, var(--primary)/10 0%, var(--accent)/10 100%);
+      border-left: 4px solid var(--primary);
+      padding: 1.5rem;
+      border-radius: calc(var(--radius) / 2);
+      margin: 1.5rem 0;
+    }
+
+    .info-box strong {
+      color: var(--primary);
+    }
+
+    .warning-box {
+      background: linear-gradient(135deg, var(--destructive)/10 0%, var(--accent)/10 100%);
+      border-left: 4px solid var(--destructive);
+      padding: 1.5rem;
+      border-radius: calc(var(--radius) / 2);
+      margin: 1.5rem 0;
+    }
+
+    .warning-box strong {
+      color: var(--destructive);
+    }
+
+    .tip-box {
+      background: linear-gradient(135deg, var(--accent)/10 0%, var(--primary)/10 100%);
+      border-left: 4px solid var(--accent);
+      padding: 1.5rem;
+      border-radius: calc(var(--radius) / 2);
+      margin: 1.5rem 0;
+    }
+
+    .tip-box strong {
+      color: var(--accent);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      background: var(--background);
+      border-radius: calc(var(--radius) / 2);
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--secondary);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background: var(--secondary);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .card {
+      background: var(--background);
+      padding: 1.5rem;
+      border-radius: calc(var(--radius) / 2);
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .card h4 {
+      color: var(--primary);
+      margin-bottom: 0.75rem;
+      font-size: 1.1rem;
+    }
+
+    .card p {
+      font-size: 0.9rem;
+      margin-bottom: 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted-foreground);
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+    }
+
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      header {
+        padding: 2rem 1rem;
+      }
+
+      header h1 {
+        font-size: 1.75rem;
+      }
+
+      section {
+        padding: 1.5rem;
+      }
+
+      nav ul {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Syntax highlighting simulation */
+    .keyword { color: #c678dd; }
+    .string { color: #98c379; }
+    .comment { color: #5c6370; font-style: italic; }
+    .function { color: #61afef; }
+    .number { color: #d19a66; }
+    .boolean { color: #d19a66; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><i class="fas fa-tools"></i> 自由工具开发指南</h1>
+      <p>创建属于你自己的工具箱插件，与社区分享你的创意</p>
+      <span class="badge"><i class="fas fa-box"></i> 支持 ZIP 包导入</span>
+      <span class="badge"><i class="fas fa-bolt"></i> 实时编译运行</span>
+      <span class="badge"><i class="fas fa-palette"></i> 完全自定义</span>
+    </header>
+
+    <nav>
+      <ul>
+        <li><a href="#quick-start"><i class="fas fa-rocket"></i> 快速开始</a></li>
+        <li><a href="#tool-json"><i class="fas fa-file-alt"></i> tool.json 格式</a></li>
+        <li><a href="#tool-tsx"><i class="fas fa-code"></i> tool.tsx 模板</a></li>
+        <li><a href="#example"><i class="fas fa-book-open"></i> 完整示例</a></li>
+        <li><a href="#api"><i class="fas fa-plug"></i> API 参考</a></li>
+        <li><a href="#best-practices"><i class="fas fa-star"></i> 最佳实践</a></li>
+        <li><a href="#faq"><i class="fas fa-question-circle"></i> 常见问题</a></li>
+      </ul>
+    </nav>
+
+    <section id="quick-start">
+      <h2>快速开始</h2>
+      
+      <div class="info-box">
+        <strong><i class="fas fa-lightbulb"></i> 核心概念</strong>
+        <p style="margin-top: 0.5rem;">创建一个工具只需要两个文件，打包为 zip 格式即可导入到工具箱中使用。</p>
+      </div>
+
+      <h3>1. 工具包结构</h3>
+      <div class="code-block">
+        <code>my-tool.zip
+├── tool.json    # 工具元数据
+└── tool.tsx     # 工具组件代码</code>
+      </div>
+
+      <h3>2. 开发流程</h3>
+      <ol>
+        <li>创建 <code>tool.json</code> 文件，定义工具的元数据</li>
+        <li>创建 <code>tool.tsx</code> 文件，编写工具的功能代码</li>
+        <li>将两个文件打包为 ZIP 格式</li>
+        <li>在工具箱页面拖拽 ZIP 文件到导入区域</li>
+        <li>系统自动解析并添加工具到本地</li>
+      </ol>
+
+      <div class="tip-box">
+        <strong><i class="fas fa-lightbulb"></i> 提示</strong>
+        <p style="margin-top: 0.5rem;">工具导入后会保存在浏览器的 localStorage 中，可以随时删除或导出分享。</p>
+      </div>
+    </section>
+
+    <section id="tool-json">
+      <h2>tool.json 格式</h2>
+      
+      <h3>基础结构</h3>
+      <div class="code-block">
+        <code>{
+  <span class="keyword">"name"</span>: <span class="string">"工具名称"</span>,
+  <span class="keyword">"description"</span>: <span class="string">"工具简介，一句话说明这个工具是做什么的"</span>,
+  <span class="keyword">"category"</span>: <span class="string">"工具类别"</span>,
+  <span class="keyword">"icon"</span>: <span class="string">"Calculator"</span>,
+  <span class="keyword">"author"</span>: <span class="string">"作者名"</span>,
+  <span class="keyword">"version"</span>: <span class="string">"1.0.0"</span>,
+  <span class="keyword">"tags"</span>: [<span class="string">"标签 1"</span>, <span class="string">"标签 2"</span>]
+}</code>
+      </div>
+
+      <h3>字段说明</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>字段</th>
+            <th>必填</th>
+            <th>类型</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>name</code></td>
+            <td><i class="fas fa-check-circle" style="color: var(--primary);"></i> 是</td>
+            <td>字符串</td>
+            <td>工具名称（最多 20 字）</td>
+          </tr>
+          <tr>
+            <td><code>description</code></td>
+            <td><i class="fas fa-check-circle" style="color: var(--primary);"></i> 是</td>
+            <td>字符串</td>
+            <td>工具简介（最多 100 字）</td>
+          </tr>
+          <tr>
+            <td><code>category</code></td>
+            <td><i class="fas fa-check-circle" style="color: var(--primary);"></i> 是</td>
+            <td>字符串</td>
+            <td>工具类别（如：计算工具、转换工具、生成器等）</td>
+          </tr>
+          <tr>
+            <td><code>icon</code></td>
+            <td><i class="fas fa-times-circle" style="color: var(--muted-foreground);"></i> 否</td>
+            <td>字符串</td>
+            <td>图标名称，使用 Lucide React 图标，默认 Calculator</td>
+          </tr>
+          <tr>
+            <td><code>author</code></td>
+            <td><i class="fas fa-times-circle" style="color: var(--muted-foreground);"></i> 否</td>
+            <td>字符串</td>
+            <td>作者名</td>
+          </tr>
+          <tr>
+            <td><code>version</code></td>
+            <td><i class="fas fa-times-circle" style="color: var(--muted-foreground);"></i> 否</td>
+            <td>字符串</td>
+            <td>版本号，默认 1.0.0</td>
+          </tr>
+          <tr>
+            <td><code>tags</code></td>
+            <td><i class="fas fa-times-circle" style="color: var(--muted-foreground);"></i> 否</td>
+            <td>数组</td>
+            <td>标签数组，用于搜索</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="warning-box">
+        <strong><i class="fas fa-exclamation-triangle"></i> 注意事项</strong>
+        <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+          <li>确保 JSON 格式正确，使用双引号</li>
+          <li>必填字段不能缺失，否则导入会失败</li>
+          <li>类别必须是预设类别之一，或自定义合理的类别名</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="tool-tsx">
+      <h2>tool.tsx 基础模板</h2>
+      
+      <h3>标准模板</h3>
+      <div class="code-block">
+        <code><span class="keyword">import</span> React, { useState } <span class="keyword">from</span> <span class="string">'react'</span>
+
+<span class="keyword">interface</span> <span class="function">ToolProps</span> {
+  onSaveResult?: (data: any) => <span class="keyword">void</span>
+  onExport?: (data: any) => <span class="keyword">void</span>
+}
+
+<span class="keyword">export default function</span> <span class="function">MyTool</span>({ onSaveResult, onExport }: ToolProps) {
+  <span class="keyword">const</span> [input, setInput] = useState(<span class="string">''</span>)
+  <span class="keyword">const</span> [result, setResult] = useState(<span class="string">''</span>)
+
+  <span class="keyword">const</span> <span class="function">handleCalculate</span> = () => {
+    <span class="comment">// 在这里编写你的工具逻辑</span>
+    setResult(<span class="string">'计算结果'</span>)
+  }
+
+  <span class="keyword">return</span> (
+    &lt;<span class="keyword">div</span> className=<span class="string">"space-y-4"</span>&gt;
+      &lt;<span class="keyword">div</span>&gt;
+        &lt;<span class="keyword">label</span> className=<span class="string">"block text-sm font-medium mb-2"</span>&gt;
+          输入
+        &lt;/<span class="keyword">label</span>&gt;
+        &lt;<span class="keyword">input</span>
+          type=<span class="string">"text"</span>
+          value={input}
+          onChange={(e) =&gt; setInput(e.target.value)}
+          className=<span class="string">"w-full px-3 py-2 border rounded-lg"</span>
+          placeholder=<span class="string">"请输入..."</span>
+        /&gt;
+      &lt;/<span class="keyword">div</span>&gt;
+
+      &lt;<span class="keyword">button</span>
+        onClick={handleCalculate}
+        className=<span class="string">"px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"</span>
+      &gt;
+        计算
+      &lt;/<span class="keyword">button</span>&gt;
+
+      {result &amp;&amp; (
+        &lt;<span class="keyword">div</span>&gt;
+          &lt;<span class="keyword">label</span> className=<span class="string">"block text-sm font-medium mb-2"</span>&gt;
+            结果
+          &lt;/<span class="keyword">label</span>&gt;
+          &lt;<span class="keyword">div</span> className=<span class="string">"p-3 bg-muted rounded-lg"</span>&gt;
+            {result}
+          &lt;/<span class="keyword">div</span>&gt;
+        &lt;/<span class="keyword">div</span>&gt;
+      )}
+    &lt;/<span class="keyword">div</span>&gt;
+  )
+}</code>
+      </div>
+
+      <h3>Props 说明</h3>
+      <div class="grid">
+        <div class="card">
+          <h4>onSaveResult</h4>
+          <p>保存结果回调函数，调用后会将数据保存到工具箱的历史记录中。</p>
+        </div>
+        <div class="card">
+          <h4>onExport</h4>
+          <p>导出回调函数，调用后会触发工具箱的导出功能。</p>
+        </div>
+      </div>
+
+      <div class="tip-box">
+        <strong><i class="fas fa-lightbulb"></i> 提示</strong>
+        <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+          <li>使用 Tailwind CSS 进行样式设计，自动适配深色/浅色模式</li>
+          <li>使用语义化颜色类（如 <code>bg-primary</code>、<code>text-foreground</code>）</li>
+          <li>避免使用内联样式和全局样式修改</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="example">
+      <h2>完整示例：Base64 编解码工具</h2>
+      
+      <h3>tool.json</h3>
+      <div class="code-block">
+        <code>{
+  <span class="keyword">"name"</span>: <span class="string">"Base64 编解码"</span>,
+  <span class="keyword">"description"</span>: <span class="string">"Base64 编码和解码工具，支持文本和文件"</span>,
+  <span class="keyword">"category"</span>: <span class="string">"转换工具"</span>,
+  <span class="keyword">"icon"</span>: <span class="string">"Lock"</span>,
+  <span class="keyword">"author"</span>: <span class="string">"Your Name"</span>,
+  <span class="keyword">"version"</span>: <span class="string">"1.0.0"</span>,
+  <span class="keyword">"tags"</span>: [<span class="string">"base64"</span>, <span class="string">"编码"</span>, <span class="string">"解码"</span>, <span class="string">"转换"</span>]
+}</code>
+      </div>
+
+      <h3>tool.tsx（部分代码）</h3>
+      <div class="code-block">
+        <code><span class="keyword">import</span> React, { useState } <span class="keyword">from</span> <span class="string">'react'</span>
+
+<span class="keyword">export default function</span> <span class="function">Base64Tool</span>({ onSaveResult, onExport }: ToolProps) {
+  <span class="keyword">const</span> [input, setInput] = useState(<span class="string">''</span>)
+  <span class="keyword">const</span> [output, setOutput] = useState(<span class="string">''</span>)
+  <span class="keyword">const</span> [mode, setMode] = useState&lt;<span class="string">'encode'</span> | <span class="string">'decode'</span>&gt;(<span class="string">'encode'</span>)
+
+  <span class="keyword">const</span> <span class="function">handleEncode</span> = () => {
+    <span class="keyword">try</span> {
+      <span class="keyword">const</span> result = btoa(encodeURIComponent(input).replace(/%([0-9A-F]{2})/g,
+        (match, p1) =&gt; String.fromCharCode(parseInt(p1, 16))
+      ))
+      setOutput(result)
+      onSaveResult?.({ type: <span class="string">'base64_encode'</span>, input, output: result })
+    } <span class="keyword">catch</span> (error) {
+      setOutput(<span class="string">'编码失败：'</span> + (error <span class="keyword">as</span> Error).message)
+    }
+  }
+
+  <span class="keyword">const</span> <span class="function">handleDecode</span> = () => {
+    <span class="keyword">try</span> {
+      <span class="keyword">const</span> result = decodeURIComponent(atob(input).split(<span class="string">''</span>).map(c =&gt;
+        <span class="string">'%'</span> + (<span class="string">'00'</span> + c.charCodeAt(0).toString(16)).slice(-2)
+      ).join(<span class="string">''</span>))
+      setOutput(result)
+      onSaveResult?.({ type: <span class="string">'base64_decode'</span>, input, output: result })
+    } <span class="keyword">catch</span> (error) {
+      setOutput(<span class="string">'解码失败：'</span> + (error <span class="keyword">as</span> Error).message)
+    }
+  }
+
+  <span class="keyword">return</span> (
+    &lt;<span class="keyword">div</span> className=<span class="string">"space-y-4"</span>&gt;
+      <span class="comment">{/* 模式切换 */}</span>
+      &lt;<span class="keyword">div</span> className=<span class="string">"flex gap-2"</span>&gt;
+        &lt;<span class="keyword">button</span> onClick={() =&gt; setMode(<span class="string">'encode'</span>)}
+          className={`flex-1 px-4 py-2 rounded-lg ${
+            mode === <span class="string">'encode'</span> ? <span class="string">'bg-primary text-primary-foreground'</span> : <span class="string">'bg-muted'</span>
+          }`}&gt;
+          编码
+        &lt;/<span class="keyword">button</span>&gt;
+        &lt;<span class="keyword">button</span> onClick={() =&gt; setMode(<span class="string">'decode'</span>)}
+          className={`flex-1 px-4 py-2 rounded-lg ${
+            mode === <span class="string">'decode'</span> ? <span class="string">'bg-primary text-primary-foreground'</span> : <span class="string">'bg-muted'</span>
+          }`}&gt;
+          解码
+        &lt;/<span class="keyword">button</span>&gt;
+      &lt;/<span class="keyword">div</span>&gt;
+      
+      <span class="comment">{/* ... 更多代码 ... */}</span>
+    &lt;/<span class="keyword">div</span>&gt;
+  )
+}</code>
+      </div>
+
+      <div class="info-box">
+        <strong><i class="fas fa-box"></i> 打包步骤</strong>
+        <ol style="margin-top: 0.5rem; margin-bottom: 0;">
+          <li>将 <code>tool.json</code> 和 <code>tool.tsx</code> 放在同一目录</li>
+          <li>选中这两个文件，右键压缩为 ZIP 格式</li>
+          <li>确保 ZIP 文件打开后直接看到这两个文件，不要有子文件夹</li>
+          <li>在工具箱页面拖拽 ZIP 文件到导入区域即可</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="api">
+      <h2>API 参考</h2>
+      
+      <h3>ToolProps 接口</h3>
+      <div class="code-block">
+        <code><span class="keyword">interface</span> <span class="function">ToolProps</span> {
+  <span class="comment">/**
+   * 保存结果回调
+   * 调用后会将数据保存到工具箱的历史记录
+   */</span>
+  onSaveResult?: (data: any) => <span class="keyword">void</span>
+  
+  <span class="comment">/**
+   * 导出回调
+   * 调用后会触发工具箱的导出功能
+   */</span>
+  onExport?: (data: any) => <span class="keyword">void</span>
+}</code>
+      </div>
+
+      <h3>可用的样式类</h3>
+      <p>工具箱使用 Tailwind CSS，你可以使用所有 Tailwind 类：</p>
+      <div class="code-block">
+        <code><span class="comment">// 常用样式</span>
+className=<span class="string">"bg-primary text-primary-foreground"</span>  <span class="comment">// 主按钮样式</span>
+className=<span class="string">"bg-secondary"</span>                        <span class="comment">// 次要样式</span>
+className=<span class="string">"bg-destructive text-destructive-foreground"</span>  <span class="comment">// 危险操作</span>
+className=<span class="string">"bg-muted"</span>                            <span class="comment">// 背景色</span>
+className=<span class="string">"border rounded-lg"</span>                   <span class="comment">// 边框和圆角</span></code>
+      </div>
+
+      <h3>主题支持</h3>
+      <p>工具会自动适配工具箱的深色/浅色模式，使用语义化颜色：</p>
+      <table>
+        <thead>
+          <tr>
+            <th>CSS 类</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>bg-background</code></td>
+            <td>背景色</td>
+          </tr>
+          <tr>
+            <td><code>bg-foreground</code></td>
+            <td>前景色</td>
+          </tr>
+          <tr>
+            <td><code>text-foreground</code></td>
+            <td>文字颜色</td>
+          </tr>
+          <tr>
+            <td><code>border-border</code></td>
+            <td>边框颜色</td>
+          </tr>
+          <tr>
+            <td><code>bg-primary</code></td>
+            <td>主色调（橙色）</td>
+          </tr>
+          <tr>
+            <td><code>bg-secondary</code></td>
+            <td>次色调</td>
+          </tr>
+          <tr>
+            <td><code>bg-destructive</code></td>
+            <td>危险色（红色）</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="best-practices">
+      <h2>最佳实践</h2>
+      
+      <div class="grid">
+        <div class="card">
+          <h4><i class="fas fa-folder"></i> 代码组织</h4>
+          <p>按照 State 定义 → 处理函数 → 辅助函数 → 渲染的顺序组织代码，保持清晰的结构。</p>
+        </div>
+        <div class="card">
+          <h4><i class="fas fa-exclamation-triangle"></i> 错误处理</h4>
+          <p>使用 try-catch 捕获异常，给用户友好的错误提示，避免程序崩溃。</p>
+        </div>
+        <div class="card">
+          <h4><i class="fas fa-comments"></i> 用户反馈</h4>
+          <p>使用 loading 状态、错误提示、成功提示等方式给用户清晰的反馈。</p>
+        </div>
+        <div class="card">
+          <h4><i class="fas fa-bolt"></i> 性能优化</h4>
+          <p>使用 useMemo 缓存计算结果，使用 useCallback 缓存函数，避免不必要的重渲染。</p>
+        </div>
+        <div class="card">
+          <h4><i class="fas fa-universal-access"></i> 可访问性</h4>
+          <p>添加 aria-label、合理的标签和焦点管理，让工具对所有用户友好。</p>
+        </div>
+        <div class="card">
+          <h4><i class="fas fa-palette"></i> 样式规范</h4>
+          <p>使用 Tailwind CSS 和语义化颜色类，避免内联样式，确保主题适配。</p>
+        </div>
+      </div>
+
+      <h3>代码示例</h3>
+      <h4><i class="fas fa-check-circle" style="color: var(--primary);"></i> 推荐：清晰的代码结构</h4>
+      <div class="code-block">
+        <code><span class="keyword">export default function</span> <span class="function">MyTool</span>({ onSaveResult, onExport }: ToolProps) {
+  <span class="comment">// 1. State 定义</span>
+  <span class="keyword">const</span> [input, setInput] = useState(<span class="string">''</span>)
+  
+  <span class="comment">// 2. 处理函数</span>
+  <span class="keyword">const</span> <span class="function">handleAction</span> = () => {
+    <span class="comment">// 逻辑</span>
+  }
+  
+  <span class="comment">// 3. 辅助函数</span>
+  <span class="keyword">const</span> <span class="function">helperFunction</span> = () => {
+    <span class="comment">// 辅助逻辑</span>
+  }
+  
+  <span class="comment">// 4. 渲染</span>
+  <span class="keyword">return</span> (
+    &lt;<span class="keyword">div</span>&gt;...&lt;/<span class="keyword">div</span>&gt;
+  )
+}</code>
+      </div>
+
+      <h4><i class="fas fa-check-circle" style="color: var(--primary);"></i> 推荐：完整的错误处理</h4>
+      <div class="code-block">
+        <code><span class="keyword">const</span> <span class="function">handleCalculate</span> = () => {
+  <span class="keyword">try</span> {
+    <span class="keyword">const</span> result = someOperation()
+    setResult(result)
+  } <span class="keyword">catch</span> (error) {
+    setResult(<span class="string">'操作失败：'</span> + (error <span class="keyword">as</span> Error).message)
+  }
+}</code>
+      </div>
+    </section>
+
+    <section id="faq">
+      <h2>常见问题</h2>
+      
+      <div class="card" style="margin-bottom: 1rem;">
+        <h4>Q1: 导入工具失败</h4>
+        <p><strong>问题：</strong> 拖拽 zip 文件后显示"无效的工具包"</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>检查 zip 文件结构，必须包含 <code>tool.json</code> 和 <code>tool.tsx</code></li>
+          <li>确保 <code>tool.json</code> 格式正确，包含必填字段</li>
+          <li>确保 <code>tool.tsx</code> 导出默认函数</li>
+          <li>ZIP 文件打开后应该直接看到这两个文件，不要有子文件夹</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1rem;">
+        <h4>Q2: 工具代码编译错误</h4>
+        <p><strong>问题：</strong> 导入后显示"代码编译失败"</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>检查 TypeScript 语法是否正确</li>
+          <li>确保使用了 React 18 的语法</li>
+          <li>避免使用浏览器不支持的新特性</li>
+          <li>检查是否使用了未定义的变量或函数</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1rem;">
+        <h4>Q3: 样式冲突</h4>
+        <p><strong>问题：</strong> 工具样式与工具箱冲突</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>使用 Tailwind CSS 的语义化颜色类</li>
+          <li>避免使用内联样式</li>
+          <li>使用 <code>className</code> 而不是 <code>class</code></li>
+          <li>不要修改全局样式</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1rem;">
+        <h4>Q4: 工具无法保存结果</h4>
+        <p><strong>问题：</strong> 调用 <code>onSaveResult</code> 后没有反应</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>确保传递的是可序列化的数据对象</li>
+          <li>检查浏览器是否支持 localStorage</li>
+          <li>确保数据大小不超过限制（1MB）</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1rem;">
+        <h4>Q5: 如何调试工具</h4>
+        <p><strong>问题：</strong> 工具运行不符合预期</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>打开浏览器开发者工具</li>
+          <li>查看 Console 中的错误信息</li>
+          <li>在代码中添加 <code>console.log</code> 调试</li>
+          <li>使用 React Developer Tools 检查组件状态</li>
+        </ul>
+      </div>
+
+      <div class="info-box" style="margin-top: 2rem;">
+        <strong><i class="fas fa-award"></i> 成为原生工具</strong>
+        <p style="margin-top: 0.5rem;">如果你开发的工具足够优秀，可以向官方申请成为原生工具！通过审核的工具将会：</p>
+        <ul style="margin-top: 0.5rem;">
+          <li><i class="fas fa-check-circle" style="color: var(--primary); margin-right: 0.5rem;"></i>获得官方认证标识，提升可信度</li>
+          <li><i class="fas fa-check-circle" style="color: var(--primary); margin-right: 0.5rem;"></i>集成到工具箱核心功能，获得更高曝光</li>
+          <li><i class="fas fa-check-circle" style="color: var(--primary); margin-right: 0.5rem;"></i>获得更好的性能优化和技术支持</li>
+        </ul>
+        <p style="margin-top: 1rem;"><i class="fas fa-envelope" style="margin-right: 0.5rem;"></i> 联系方式：<a href="mailto:support@ruanmgjx.dpdns.org" style="color: var(--primary);">support@ruanmgjx.dpdns.org</a></p>
+        <p><i class="fas fa-comments" style="margin-right: 0.5rem;"></i> Discord 社区：<a href="https://discord.gg/MNvQFkmwCE" target="_blank" rel="noopener noreferrer" style="color: var(--primary);">加入讨论</a></p>
+      </div>
+    </section>
+
+    <footer>
+      <p>© 2026 TheGuide 工具箱 - Made with <i class="fas fa-heart" style="color: var(--primary);"></i> by Ruanm</p>
+      <p>有任何问题？联系 <a href="mailto:support@ruanmgjx.dpdns.org">support@ruanmgjx.dpdns.org</a></p>
+    </footer>
+  </div>
+
+  <script>
+    // 为所有代码块添加复制按钮
+    document.addEventListener('DOMContentLoaded', function() {
+      const codeBlocks = document.querySelectorAll('.code-block');
+      
+      codeBlocks.forEach(block => {
+        // 创建复制按钮
+        const button = document.createElement('button');
+        button.className = 'copy-button';
+        button.innerHTML = '<i class="fas fa-copy"></i> <span>复制</span>';
+        
+        // 添加点击事件
+        button.addEventListener('click', async function() {
+          const code = block.querySelector('code');
+          const text = code.innerText;
+          
+          try {
+            await navigator.clipboard.writeText(text);
+            button.innerHTML = '<i class="fas fa-check"></i> <span>已复制</span>';
+            button.classList.add('copied');
+            
+            setTimeout(() => {
+              button.innerHTML = '<i class="fas fa-copy"></i> <span>复制</span>';
+              button.classList.remove('copied');
+            }, 2000);
+          } catch (err) {
+            // 降级方案
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            button.innerHTML = '<i class="fas fa-check"></i> <span>已复制</span>';
+            button.classList.add('copied');
+            
+            setTimeout(() => {
+              button.innerHTML = '<i class="fas fa-copy"></i> <span>复制</span>';
+              button.classList.remove('copied');
+            }, 2000);
+          }
+        });
+        
+        // 添加按钮到代码块
+        block.style.position = 'relative';
+        block.appendChild(button);
+      });
+    });
+
+    // 平滑滚动
+    document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault()
+        const target = document.querySelector(this.getAttribute('href'))
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          })
+        }
+      })
+    })
+
+    // 导航栏高亮当前章节
+    window.addEventListener('scroll', () => {
+      const sections = document.querySelectorAll('section')
+      const navLinks = document.querySelectorAll('nav a')
+      
+      let current = ''
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop
+        const sectionHeight = section.clientHeight
+        if (window.pageYOffset >= sectionTop - 100) {
+          current = section.getAttribute('id')
+        }
+      })
+
+      navLinks.forEach(link => {
+        link.style.background = link.getAttribute('href') === `#${current}` ? 'var(--secondary)' : 'transparent'
+        link.style.color = link.getAttribute('href') === `#${current}` ? 'var(--primary)' : 'var(--foreground)'
+      })
+    })
+  </script>
+</body>
+</html>

@@ -109,17 +109,6 @@ export function Navbar() {
                     
                     {/* Dropdown */}
                     <div className="absolute right-0 mt-2 w-48 rounded-lg border border-border bg-popover py-2 shadow-lg z-50">
-                      <Link
-                        href="https://ruanmgjx.dpdns.org/user"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        <User className="h-4 w-4" />
-                        用户中心
-                        <ExternalLink className="ml-auto h-3 w-3 text-muted-foreground" />
-                      </Link>
                       <button
                         onClick={() => {
                           logout()

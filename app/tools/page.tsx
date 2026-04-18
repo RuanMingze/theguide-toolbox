@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import React, { useState, useCallback, useEffect } from "react"
+import Link from "next/link"
 import { Navbar } from "@/components/navbar"
 import { useFavorites } from "@/hooks/use-favorites"
 import { useSettings } from "@/hooks/use-settings"
 import { useTranslation } from "@/hooks/use-translation"
+import JSZip from 'jszip'
 import { 
   Search, 
   FileText, 
@@ -22,7 +24,7 @@ import {
   Binary,
   FileJson,
   Code,
-  Link,
+  Link2,
   Shuffle,
   Download,
   Scissors,
@@ -40,7 +42,10 @@ import {
   Upload,
   ArrowLeftRight,
   Heart,
-  Shield
+  Shield,
+  Import,
+  Trash2,
+  BookOpen,
 } from "lucide-react"
 
 interface Tool {
@@ -49,6 +54,18 @@ interface Tool {
   description: string
   category: string
   icon: React.ElementType
+  isCustom?: boolean
+  customData?: CustomToolData
+}
+
+interface CustomToolData {
+  id: string
+  name: string
+  description: string
+  category: string
+  icon: string
+  code: string
+  isCustom: true
 }
 
 const tools: Tool[] = [
@@ -63,7 +80,7 @@ const tools: Tool[] = [
   
   // 编码转换
   { id: "base64", name: "Base64编解码", description: "文本与Base64互转", category: "编码转换", icon: Binary },
-  { id: "url-encode", name: "URL编解码", description: "URL编码与解码", category: "编码转换", icon: Link },
+  { id: "url-encode", name: "URL 编解码", description: "URL 编码与解码", category: "编码转换", icon: Link2 },
   { id: "unicode", name: "Unicode转换", description: "Unicode编码转换", category: "编码转换", icon: Hash },
   { id: "html-entity", name: "HTML实体转换", description: "HTML特殊字符转义", category: "编码转换", icon: Code },
   { id: "json-format", name: "JSON格式化", description: "格式化和校验JSON", category: "编码转换", icon: FileJson },
@@ -280,15 +297,413 @@ function ToolModal({ tool, onClose }: { tool: Tool; onClose: () => void }) {
           </button>
         </div>
         <div className="p-6">
-          <ToolContent toolId={tool.id} />
+          <ToolContent toolId={tool.id} customToolData={tool.customData} />
         </div>
       </div>
     </div>
   )
 }
 
+// 动态组件执行器
+interface ToolContentProps {
+  toolId: string
+  customToolData?: CustomToolData
+}
+
+// 使用 Function 构造函数安全地执行自定义代码
+interface ExecuteResult {
+  component: React.ComponentType<any>
+  processed: string
+}
+
+async function executeCustomCode(code: string): Promise<ExecuteResult> {
+  // 预处理代码：移除 TypeScript 语法和 import 语句
+  let processedCode = code
+  
+  // 1. 移除所有 import 语句（因为我们已经提供了 React 和 hooks）
+  processedCode = processedCode.replace(/import\s+.*?from\s+['"].*?['"];?/g, '')
+  
+  // 2. 移除 TypeScript 接口定义（interface ... {}）
+  processedCode = processedCode.replace(/interface\s+\w+\s*\{[^}]*\}/g, '')
+  
+  // 3. 移除 TypeScript 泛型语法（仅限函数调用和类型定义中的泛型）
+  // 注意：不能删除 JSX 标签，所以要更精确地匹配
+  // 匹配函数调用后的泛型：func<Type>()
+  processedCode = processedCode.replace(/(\w)\s*<\s*[\w\s,\|&]+>\s*\(/g, '$1(')
+  // 匹配箭头函数泛型：<Type>() =>
+  processedCode = processedCode.replace(/<\s*[\w\s,\|&]+\s*>\s*\(\s*\)\s*=>/g, '() =>')
+  // 匹配类型断言：<Type>value（使用负向前瞻避免删除 JSX 标签）
+  // JSX 标签前面通常是空白或换行，而类型断言前面通常是标识符或括号
+  processedCode = processedCode.replace(/(?<=[\w\)])\s*<\s*\w+\s*>\s*(?=\w)/g, '')
+  
+  // 4. 移除 export default 关键字，并处理函数声明
+  processedCode = processedCode.replace(/export\s+default\s+function\s+/g, 'function ')
+  processedCode = processedCode.replace(/export\s+default\s+/g, '')
+  
+  // 5. 移除所有类型注解（: Type）- 使用多种模式确保完全清理
+  // 模式 1: 函数参数的类型注解 (: Type) 或 (: Type | Type)
+  processedCode = processedCode.replace(/:\s*\w+(\s*\|\s*\w+)*\s*([,)])/g, '$2')
+  // 模式 2: 函数参数的类型注解在括号内 (: Type})
+  processedCode = processedCode.replace(/:\s*\w+(\s*\|\s*\w+)*\s*(\})/g, '$2')
+  // 模式 3: 变量声明的类型注解 (: Type =)
+  processedCode = processedCode.replace(/:\s*\w+(\s*\|\s*\w+)*\s*(?=\s*=)/g, '')
+  // 模式 4: 箭头函数的返回类型 (: Type =>)
+  processedCode = processedCode.replace(/:\s*\w+(\s*\|\s*\w+)*\s*(?=\s*=>)/g, '')
+  // 模式 5: 清理对象解构中的类型注解（处理多行情况）
+  // 只匹配类型注解部分，使用更保守的模式
+  processedCode = processedCode.replace(/(\}\s*):\s*\{[\s\S]{0,500}?\}\s*\)/g, '$1)')
+  // 模式 6: 清理箭头函数参数后的多行类型注解（循环处理）
+  let prevCode2
+  do {
+    prevCode2 = processedCode
+    processedCode = processedCode.replace(/(\([^)]*)\s*:\s*[\w<>\s\|,\{\}\?\(\)]+\s*\)\s*=>/g, '$1) =>')
+  } while (processedCode !== prevCode2)
+  // 模式 7: 清理剩余的 `: {` 类型注解块（多行）- 限制最大长度避免误删
+  processedCode = processedCode.replace(/:\s*\{[^}]{0,200}?\}/g, '')
+  // 模式 8: 清理泛型类型注解（: Record<...>, : Array<...>, : Map<...> 等）
+  processedCode = processedCode.replace(/:\s*\w+\s*<[^>]*>/g, '')
+  // 模式 9: 清理复杂的泛型类型（嵌套泛型）
+  processedCode = processedCode.replace(/:\s*\w+\s*<\s*[^>]*<[^>]*>\s*>/g, '')
+  
+  // 6. 清理多余的空白字符（括号内的空格）
+  processedCode = processedCode.replace(/\(\s*\{/g, '({')
+  processedCode = processedCode.replace(/\}\s*\)/g, '})')
+  
+  // 7. 清理多余的空行和空白
+  processedCode = processedCode.replace(/^\s*[\r\n]/gm, '\n')
+  processedCode = processedCode.replace(/\n\s*\n\s*\n/g, '\n\n')
+  
+  try {
+    console.log('===== 开始执行自定义代码 =====')
+    console.log('原始代码长度:', code.length)
+    console.log('处理后代码长度:', processedCode.length)
+    
+    // 调试：输出原始代码和清理后代码的对比（使用说明部分）
+    const originalLines = code.split('\n')
+    const processedLines = processedCode.split('\n')
+    const instructionIdx = originalLines.findIndex(line => line.includes('使用说明'))
+    if (instructionIdx > 0) {
+      console.log('=== 原始代码 - 使用说明部分 ===')
+      console.log(originalLines.slice(instructionIdx, instructionIdx + 10).join('\n'))
+      console.log('=== 清理后代码 - 使用说明部分 ===')
+      console.log(processedLines.slice(instructionIdx, instructionIdx + 10).join('\n'))
+    }
+    
+    // 调试：输出清理后代码的第 195-200 行（错误发生的位置）
+    console.log('=== 清理后代码 - 第 195-200 行 ===')
+    console.log(processedLines.slice(194, 200).join('\n'))
+    
+    // 调试：输出清理后代码的总行数
+    console.log('清理后代码总行数:', processedLines.length)
+    
+    // 使用 Babel 编译 JSX（如果 Babel 可用）
+    let transpiledCode = processedCode
+    if (typeof window !== 'undefined') {
+      console.log('window 对象存在:', !!window)
+      console.log('window.Babel 初始状态:', !!(window as any).Babel)
+      
+      // 检查 Babel 是否已加载
+      if (!(window as any).Babel) {
+        console.warn('⚠️ Babel 尚未加载，开始等待...')
+        let waitCount = 0
+        // 等待 Babel 加载
+        await new Promise<void>((resolve) => {
+          const checkBabel = () => {
+            waitCount++
+            console.log(`第 ${waitCount} 次检查 Babel...`, (window as any).Babel ? '已加载' : '未加载')
+            if ((window as any).Babel) {
+              console.log('✅ Babel 加载完成！')
+              resolve()
+            } else {
+              setTimeout(checkBabel, 100)
+            }
+          }
+          // 最多等待 5 秒
+          const timeout = setTimeout(() => {
+            console.error('❌ Babel 加载超时（5 秒），将使用原始代码')
+            resolve()
+          }, 5000)
+          checkBabel()
+          // 清除超时（如果 Babel 在超时前加载完成）
+          const originalResolve = resolve
+          resolve = () => {
+            clearTimeout(timeout)
+            originalResolve()
+          }
+        })
+      } else {
+        console.log('✅ Babel 已经加载')
+      }
+      
+      if ((window as any).Babel) {
+        console.log('🔧 开始使用 Babel 编译 JSX...')
+        console.log('Babel 版本:', (window as any).Babel.version || '未知')
+        try {
+          const result = (window as any).Babel.transform(processedCode, {
+            presets: ['react', 'env']
+          })
+          transpiledCode = result.code
+          console.log('✅ Babel 编译成功！')
+          console.log('编译后代码长度:', transpiledCode.length)
+          console.log('编译后代码预览 (前 500 字符):')
+          console.log(transpiledCode.substring(0, 500) + '...')
+          
+          // 检查是否包含 React.createElement
+          if (transpiledCode.includes('React.createElement')) {
+            console.log('✅ 检测到 React.createElement，JSX 已成功转换')
+          } else {
+            console.warn('⚠️ 未检测到 React.createElement，可能 JSX 转换失败')
+          }
+        } catch (babelError) {
+          console.error('❌ Babel 编译失败:', babelError)
+          console.log('处理后的代码 (前 500 字符):', processedCode.substring(0, 500) + '...')
+          
+          // 提取更友好的错误信息
+          let friendlyError = 'JSX 语法错误，请检查代码'
+          const errorMessage = babelError.message || String(babelError)
+          
+          // 检查是否是标签不匹配
+          if (errorMessage.includes('Expected corresponding JSX closing tag')) {
+            const match = errorMessage.match(/Expected corresponding JSX closing tag for <(\w+)>/)
+            if (match && match[1]) {
+              const tagName = match[1]
+              friendlyError = `JSX 标签不匹配：缺少 </${tagName}> 闭合标签，请检查代码中的 HTML 结构`
+            }
+          } else if (errorMessage.includes('Unexpected token')) {
+            const firstLine = errorMessage.split('\n')[0]
+            friendlyError = `JSX 编译失败：${firstLine}`
+          }
+          
+          throw { error: friendlyError, processedCode }
+          // 继续使用处理后的代码
+        }
+      } else {
+        console.error('❌ Babel 对象不存在，无法编译 JSX')
+        console.log('window 对象上的可用属性:', Object.keys(window).filter(k => k.toLowerCase().includes('babel')))
+      }
+    } else {
+      console.error('❌ window 对象不存在（可能在 SSR 环境）')
+    }
+    
+    // 创建一个沙箱环境来执行代码
+    const moduleExports: { [key: string]: any } = {}
+    
+    // 提取组件名称（从 export default 或函数声明）
+    let componentName = ''
+    const defaultExportMatch = code.match(/export\s+default\s+function\s+(\w+)/)
+    if (defaultExportMatch) {
+      componentName = defaultExportMatch[1]
+    } else {
+      const functionMatch = code.match(/function\s+(\w+)\s*\(\s*\{/)
+      if (functionMatch) {
+        componentName = functionMatch[1]
+      }
+    }
+    
+    // 构建一个函数来执行代码，提供必要的依赖
+    const executeCode = new Function(
+      'React',
+      'useState',
+      'useEffect',
+      'useCallback',
+      'useMemo',
+      'useRef',
+      'exports',
+      `
+      'use strict'
+      var module = { exports: {} }
+      var exports = module.exports
+      
+      try {
+        ${transpiledCode}
+        
+        // 如果代码中有命名函数声明，尝试将其导出
+        if (typeof ${componentName || 'Component'} === 'function') {
+          module.exports = ${componentName || 'Component'}
+        }
+        
+        return module.exports
+      } catch (e) {
+        console.error('代码执行错误:', e)
+        throw e
+      }
+      `
+    )
+    
+    const result = executeCode(
+      React,
+      React.useState,
+      React.useEffect,
+      React.useCallback,
+      React.useMemo,
+      React.useRef,
+      moduleExports
+    )
+    
+    // 尝试多种方式获取组件
+    // 1. 首先尝试从返回值中获取
+    if (result && typeof result === 'function') {
+      return { component: result, processed: transpiledCode }
+    }
+    
+    // 2. 尝试从 moduleExports 中获取 default
+    if (moduleExports.default) {
+      return { component: moduleExports.default, processed: transpiledCode }
+    }
+    
+    // 3. 尝试从代码中提取组件名称
+    if (componentName && moduleExports[componentName]) {
+      return { component: moduleExports[componentName], processed: transpiledCode }
+    }
+    
+    // 4. 如果都找不到，返回第一个非 React 的导出
+    const keys = Object.keys(moduleExports)
+    for (const key of keys) {
+      if (typeof moduleExports[key] === 'function') {
+        return { component: moduleExports[key], processed: transpiledCode }
+      }
+    }
+    
+    throw new Error('无法从代码中提取组件，请确保代码包含有效的 React 组件导出')
+  } catch (error) {
+    console.error('执行自定义代码失败:', error)
+    // 即使出错也返回处理后的代码，方便调试
+    throw { error: error instanceof Error ? error.message : String(error), processedCode }
+  }
+}
+
+// 自定义工具组件包装器
+interface CustomToolWrapperProps {
+  toolData: CustomToolData
+}
+
+function CustomToolWrapper({ toolData }: CustomToolWrapperProps) {
+  const [Component, setComponent] = useState<React.ComponentType<any> | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [saveResult, setSaveResult] = useState<any>(null)
+  const [exportData, setExportData] = useState<any>(null)
+  const [processedCode, setProcessedCode] = useState<string | null>(null)
+  
+  useEffect(() => {
+    console.log('===== CustomToolWrapper 开始加载组件 =====')
+    console.log('工具名称:', toolData.name)
+    console.log('工具 ID:', toolData.id)
+    console.log('代码长度:', toolData.code.length)
+    
+    const loadComponent = async () => {
+      try {
+        console.log('开始调用 executeCustomCode...')
+        const { component, processed } = await executeCustomCode(toolData.code)
+        console.log('✅ executeCustomCode 执行成功')
+        console.log('组件类型:', typeof component)
+        setProcessedCode(processed)
+        setComponent(() => component)
+        console.log('组件已设置，准备渲染')
+      } catch (err: any) {
+        console.error('❌ 加载组件失败:', err)
+        if (err.processedCode) {
+          console.log('错误中包含处理后的代码')
+          setProcessedCode(err.processedCode)
+          setError(err.error || '未知错误')
+        } else {
+          setError((err as Error).message)
+        }
+      }
+    }
+    loadComponent()
+  }, [toolData.code])
+  
+  const handleSaveResult = (data: any) => {
+    setSaveResult(data)
+    console.log('工具保存结果:', data)
+  }
+  
+  const handleExport = (data: any) => {
+    setExportData(data)
+    console.log('工具导出数据:', data)
+  }
+  
+  if (error) {
+    return (
+      <div className="rounded-lg bg-destructive/10 p-4 text-destructive">
+        <h3 className="mb-2 font-semibold">工具加载失败</h3>
+        <p className="text-sm mb-3">{error}</p>
+        
+        {processedCode && (
+          <details className="mt-4">
+            <summary className="cursor-pointer text-sm font-medium hover:underline">
+              查看处理后的代码
+            </summary>
+            <div className="mt-2 max-h-96 overflow-auto rounded bg-muted p-3">
+              <pre className="text-xs font-mono whitespace-pre-wrap break-all">
+                {processedCode}
+              </pre>
+            </div>
+          </details>
+        )}
+        
+        <details className="mt-4">
+          <summary className="cursor-pointer text-sm font-medium hover:underline">
+            查看原始代码
+          </summary>
+          <div className="mt-2 max-h-96 overflow-auto rounded bg-muted p-3">
+            <pre className="text-xs font-mono whitespace-pre-wrap break-all">
+              {toolData.code}
+            </pre>
+          </div>
+        </details>
+        
+        <div className="mt-4 rounded bg-amber-500/10 p-3 text-amber-500">
+          <p className="text-xs font-semibold mb-1">可能的原因：</p>
+          <ul className="text-xs list-disc list-inside space-y-1 opacity-80">
+            <li>代码中包含不支持的 TypeScript 语法</li>
+            <li>使用了未提供的 React hooks</li>
+            <li>代码格式不正确</li>
+          </ul>
+        </div>
+      </div>
+    )
+  }
+  
+  if (!Component) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        <span className="ml-3 text-muted-foreground">正在加载自定义工具...</span>
+      </div>
+    )
+  }
+  
+  return (
+    <div>
+      <Component onSaveResult={handleSaveResult} onExport={handleExport} />
+      {saveResult && (
+        <div className="mt-4 rounded-lg bg-green-500/10 p-3 text-sm text-green-500">
+          <p className="font-semibold">保存成功</p>
+          <pre className="mt-2 overflow-auto bg-green-500/20 p-2 rounded text-xs">
+            {JSON.stringify(saveResult, null, 2)}
+          </pre>
+        </div>
+      )}
+      {exportData && (
+        <div className="mt-4 rounded-lg bg-blue-500/10 p-3 text-sm text-blue-500">
+          <p className="font-semibold">导出成功</p>
+          <pre className="mt-2 overflow-auto bg-blue-500/20 p-2 rounded text-xs">
+            {JSON.stringify(exportData, null, 2)}
+          </pre>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Individual Tool Implementations
-function ToolContent({ toolId }: { toolId: string }) {
+function ToolContent({ toolId, customToolData }: ToolContentProps) {
+  // 如果是自定义工具，直接渲染自定义组件
+  if (customToolData) {
+    return <CustomToolWrapper toolData={customToolData} />
+  }
+  
   switch (toolId) {
     case "text-counter":
       return <TextCounterTool />
@@ -3569,12 +3984,146 @@ export default function ToolsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null)
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
+  const [customTools, setCustomTools] = useState<CustomToolData[]>([])
+  const [importError, setImportError] = useState<string | null>(null)
+  const [importSuccess, setImportSuccess] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const { isFavorite, toggleFavorite } = useFavorites()
   
   // 应用全局设置
   useSettings()
+  
+  // 加载自定义工具
+  useEffect(() => {
+    const saved = localStorage.getItem('custom_tools')
+    if (saved) {
+      try {
+        const tools = JSON.parse(saved)
+        setCustomTools(tools)
+      } catch (e) {
+        console.error('Failed to load custom tools:', e)
+      }
+    }
+  }, [])
+  
+  // 合并内置工具和自定义工具
+  const allTools: Tool[] = [
+    ...tools,
+    ...customTools.map(customTool => ({
+      id: customTool.id,
+      name: customTool.name,
+      description: customTool.description,
+      category: customTool.category,
+      icon: (window as any).lucide?.[customTool.icon] || Zap,
+      isCustom: true,
+      customData: customTool,
+    }))
+  ]
+  
+  // 处理文件导入
+  const handleImportTool = async (file: File) => {
+    setImportError(null)
+    setImportSuccess(false)
+    
+    if (!file.name.endsWith('.zip')) {
+      setImportError(lang === 'en' ? 'Please upload a ZIP file' : '请上传 ZIP 文件')
+      return
+    }
+    
+    try {
+      const zip = await JSZip.loadAsync(file)
+      
+      // 验证文件结构
+      if (!zip.file('tool.json') || !zip.file('tool.tsx')) {
+        setImportError(lang === 'en' 
+          ? 'Invalid tool package: missing tool.json or tool.tsx' 
+          : '无效的工具包：缺少 tool.json 或 tool.tsx')
+        return
+      }
+      
+      // 读取 tool.json
+      const jsonContent = await zip.file('tool.json')!.async('text')
+      const toolMeta = JSON.parse(jsonContent)
+      
+      // 验证必填字段
+      const requiredFields = ['name', 'description', 'category']
+      const missingFields = requiredFields.filter(field => !toolMeta[field])
+      
+      if (missingFields.length > 0) {
+        setImportError(lang === 'en'
+          ? `Missing required fields: ${missingFields.join(', ')}`
+          : `缺少必填字段：${missingFields.join(', ')}`)
+        return
+      }
+      
+      // 读取 tool.tsx
+      const tsxContent = await zip.file('tool.tsx')!.async('text')
+      
+      // 创建工具 ID
+      const toolId = `custom-${Date.now()}`
+      
+      // 保存自定义工具
+      const customTool: CustomToolData = {
+        id: toolId,
+        name: toolMeta.name,
+        description: toolMeta.description,
+        category: toolMeta.category || lang === 'en' ? 'Custom Tools' : '自定义工具',
+        icon: toolMeta.icon || 'Zap',
+        code: tsxContent,
+        isCustom: true,
+      }
+      
+      // 保存到 localStorage
+      const updatedTools = [...customTools, customTool]
+      localStorage.setItem('custom_tools', JSON.stringify(updatedTools))
+      setCustomTools(updatedTools)
+      
+      setImportSuccess(true)
+      
+      // 1 秒后关闭对话框
+      setTimeout(() => {
+        setImportDialogOpen(false)
+        setImportSuccess(false)
+      }, 1500)
+      
+    } catch (error) {
+      console.error('Import error:', error)
+      setImportError(lang === 'en'
+        ? 'Failed to import tool: ' + (error as Error).message
+        : '导入工具失败：' + (error as Error).message)
+    }
+  }
+  
+  // 处理拖拽事件
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }, [])
+  
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }, [])
+  
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    
+    const file = e.dataTransfer.files[0]
+    if (file) {
+      handleImportTool(file)
+    }
+  }, [customTools, lang])
+  
+  // 删除自定义工具
+  const handleDeleteCustomTool = (toolId: string) => {
+    const updatedTools = customTools.filter(t => t.id !== toolId)
+    localStorage.setItem('custom_tools', JSON.stringify(updatedTools))
+    setCustomTools(updatedTools)
+  }
 
-  const filteredTools = tools.filter(tool => {
+  const filteredTools = allTools.filter(tool => {
     const matchesSearch = 
       tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tool.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -3582,7 +4131,10 @@ export default function ToolsPage() {
     return matchesSearch && matchesCategory
   })
 
-  const groupedTools = categories.reduce((acc, category) => {
+  // 动态计算所有类别（包括自定义工具的类别）
+  const allCategories = Array.from(new Set(allTools.map(tool => tool.category)))
+
+  const groupedTools = allCategories.reduce((acc, category) => {
     const categoryTools = filteredTools.filter(tool => tool.category === category)
     if (categoryTools.length > 0) {
       acc[category] = categoryTools
@@ -3616,6 +4168,13 @@ export default function ToolsPage() {
               className="w-full rounded-xl border border-border bg-card px-10 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
+          <button
+            onClick={() => setImportDialogOpen(true)}
+            className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            <Import className="h-5 w-5" />
+            {lang === 'en' ? 'Import Custom Tool' : '导入自定义工具'}
+          </button>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedCategory(null)}
@@ -3627,7 +4186,7 @@ export default function ToolsPage() {
             >
               {lang === 'en' ? 'All' : '全部'}
             </button>
-            {categories.map((category) => (
+            {allCategories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
@@ -3686,7 +4245,6 @@ export default function ToolsPage() {
                           e.stopPropagation()
                           toggleFavorite({
                             type: 'tool',
-                            id: tool.id,
                             name: tool.name,
                             url: `/tools?tool=${tool.id}`,
                             description: tool.description,
@@ -3716,12 +4274,170 @@ export default function ToolsPage() {
             <p className="text-muted-foreground">{lang === 'en' ? 'No matching tools found' : '未找到匹配的工具'}</p>
           </div>
         )}
+        
+        {/* Tool Modal */}
+        {selectedTool && (
+          <ToolModal tool={selectedTool} onClose={() => setSelectedTool(null)} />
+        )}
+        
+        {/* Import Dialog */}
+        {importDialogOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+            <div 
+              className="relative w-full max-w-2xl rounded-2xl border border-border bg-card shadow-xl"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <div className="flex items-center justify-between border-b border-border p-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+                    <Import className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">
+                      {lang === 'en' ? 'Import Custom Tool' : '导入自定义工具'}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      {lang === 'en' ? 'Upload a ZIP file containing tool.json and tool.tsx' : '上传包含 tool.json 和 tool.tsx 的 ZIP 文件'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setImportDialogOpen(false)
+                    setImportError(null)
+                    setImportSuccess(false)
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              
+              <div className="p-6">
+                {/* 拖拽区域 */}
+                <div
+                  className={`relative flex h-48 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-colors ${
+                    isDragging
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50 hover:bg-secondary/50'
+                  }`}
+                  onClick={() => document.getElementById('tool-file-input')?.click()}
+                >
+                  <input
+                    id="tool-file-input"
+                    type="file"
+                    accept=".zip"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleImportTool(file)
+                    }}
+                  />
+                  <Upload className={`mb-4 h-12 w-12 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <p className="text-sm font-medium text-foreground">
+                    {isDragging
+                      ? (lang === 'en' ? 'Drop file here' : '将文件拖到此处')
+                      : (lang === 'en' ? 'Click to upload or drag and drop' : '点击上传或拖拽文件')}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {lang === 'en' ? 'ZIP file (tool.json + tool.tsx)' : 'ZIP 文件（包含 tool.json 和 tool.tsx）'}
+                  </p>
+                </div>
+                
+                {/* 错误信息 */}
+                {importError && (
+                  <div className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                    {importError}
+                  </div>
+                )}
+                
+                {/* 成功信息 */}
+                {importSuccess && (
+                  <div className="mt-4 rounded-lg bg-green-500/10 p-3 text-sm text-green-500">
+                    {lang === 'en' ? 'Tool imported successfully!' : '工具导入成功！'}
+                  </div>
+                )}
+                
+                {/* 自定义工具列表 */}
+                {customTools.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="mb-3 text-sm font-semibold text-foreground">
+                      {lang === 'en' ? 'Your Custom Tools' : '我的自定义工具'}
+                    </h3>
+                    <div className="space-y-2">
+                      {customTools.map((tool) => (
+                        <div
+                          key={tool.id}
+                          className="flex items-center justify-between rounded-lg border border-border bg-secondary/50 p-3"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                              {(() => {
+                                const IconComponent = (window as any).lucide?.[tool.icon] || Zap
+                                return <IconComponent className="h-4 w-4" />
+                              })()}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{tool.name}</p>
+                              <p className="text-xs text-muted-foreground">{tool.category}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleDeleteCustomTool(tool.id)}
+                            className="flex items-center gap-1 rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* 帮助信息 */}
+                <div className="mt-6 rounded-lg bg-muted p-4">
+                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <FileText className="h-4 w-4" />
+                    {lang === 'en' ? 'File Requirements' : '文件要求'}
+                  </h4>
+                  <ul className="space-y-1 text-xs text-muted-foreground">
+                    <li>• tool.json - {lang === 'en' ? 'Tool metadata (name, description, category)' : '工具元数据（名称、描述、类别）'}</li>
+                    <li>• tool.tsx - {lang === 'en' ? 'React component code' : 'React 组件代码'}</li>
+                  </ul>
+                  <div className="mt-3 flex flex-col gap-2">
+                    <a
+                      href="/examples/calculator-tool.zip"
+                      download
+                      className="flex items-center gap-2 text-xs text-primary hover:underline"
+                    >
+                      <Download className="h-3 w-3" />
+                      {lang === 'en' ? 'Download example tool' : '下载示例工具'}
+                    </a>
+                    <Link
+                      href="/marketplace"
+                      className="flex items-center gap-2 text-xs text-primary hover:underline"
+                    >
+                      <Zap className="h-3 w-3" />
+                      {lang === 'en' ? 'Visit Tool Marketplace' : '访问工具市场'}
+                    </Link>
+                    <a
+                      href="/tools-development.html"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-xs text-primary hover:underline"
+                    >
+                      <BookOpen className="h-3 w-3" />
+                      {lang === 'en' ? 'View Development Documentation' : '查看开发文档'}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
-
-      {/* Tool Modal */}
-      {selectedTool && (
-        <ToolModal tool={selectedTool} onClose={() => setSelectedTool(null)} />
-      )}
     </div>
   )
 }

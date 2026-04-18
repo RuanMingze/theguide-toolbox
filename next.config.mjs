@@ -20,8 +20,6 @@ const nextConfig = {
   outputFileTracingExcludes: {
     '*': ['./functions/**/*'],
   },
-  // Electron 支持
-  output: 'standalone',
 }
 
 export default withPWA(nextConfig)

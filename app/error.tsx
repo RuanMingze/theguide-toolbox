@@ -207,7 +207,7 @@ export default function Error({
               </p>
               <div className="flex flex-wrap gap-2">
                 <a
-                  href="https://github.com/your-repo/issues"
+                  href="https://github.com/TheGuide-toolbox/issues"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 text-xs text-primary hover:underline"
