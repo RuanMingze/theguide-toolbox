@@ -54,7 +54,7 @@ export const translatableTexts: string[] = [
   // 快捷入口
   '快捷入口',
   '精选 100+ 优质网站，快速访问',
-  '40+ 在线工具，提升效率',
+  '70+ 在线工具，提升效率',
   '快速访问收藏的工具和网站',
   '网站导航',
   '实用工具',
@@ -190,7 +190,7 @@ export const englishTranslations: Record<string, string> = {
   // 快捷入口
   '快捷入口': 'Quick Access',
   '精选 100+ 优质网站，快速访问': '100+ quality websites for quick access',
-  '40+ 在线工具，提升效率': '40+ online tools to boost efficiency',
+  '70+ 在线工具，提升效率': '70+ online tools to boost efficiency',
   '快速访问收藏的工具和网站': 'Quick access to your favorite tools and websites',
   
   // 天气

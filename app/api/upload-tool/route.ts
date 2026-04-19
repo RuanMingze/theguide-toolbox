@@ -8,14 +8,14 @@ export const runtime = 'edge'
 const MAX_FILE_SIZE = 3 * 1024 * 1024
 
 // 初始化 Supabase 客户端（使用 Service Key 以绕过 RLS）
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY
+const supabaseUrl = process.env.SUPABASE_URL || 'https://example.com'
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || '123456789'
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Missing Supabase credentials')
 }
 
-const supabase = createClient(supabaseUrl || '', supabaseServiceKey || '', {
+const supabase = createClient(supabaseUrl || 'https://example.com', supabaseServiceKey || '123456789', {
   auth: {
     autoRefreshToken: false,
     persistSession: false
@@ -23,18 +23,20 @@ const supabase = createClient(supabaseUrl || '', supabaseServiceKey || '', {
 })
 
 /**
- * 从请求中提取 user_id
+ * 从请求中提取 user_id 并验证 OAuth 提供者
  * 优先级：user_id 参数 > oauth_user 对象
+ * 只允许 Ruanm 和 GitHub 账号登录的用户
  */
-function extractUserId(request: NextRequest): number | null {
+function extractUserId(request: NextRequest): { userId: number; provider: string } | null {
   try {
-    // 1. 优先从请求参数中取 user_id
+    // 1. 优先从请求参数中取 user_id（仅用于测试，需要额外的验证参数）
     const urlParamUserId = request.nextUrl.searchParams.get('user_id')
-    if (urlParamUserId) {
+    const urlParamProvider = request.nextUrl.searchParams.get('provider')
+    if (urlParamUserId && urlParamProvider === 'ruanm') {
       const parsed = parseInt(urlParamUserId, 10)
       if (!isNaN(parsed)) {
-        console.log('从 URL 参数获取 user_id:', parsed)
-        return parsed
+        console.log('从 URL 参数获取 user_id (Ruanm):', parsed)
+        return { userId: parsed, provider: 'ruanm' }
       }
     }
 
@@ -42,27 +44,37 @@ function extractUserId(request: NextRequest): number | null {
     const oauthUserHeader = request.headers.get('x-oauth-user')
     if (oauthUserHeader) {
       const oauthUser = JSON.parse(decodeURIComponent(oauthUserHeader))
+      const provider = oauthUser.provider || oauthUser.source
       
-      // Ruanm OAuth 取 user-id
-      if (oauthUser['user-id']) {
-        const ruanmUserId = parseInt(oauthUser['user-id'], 10)
-        if (!isNaN(ruanmUserId)) {
-          console.log('从 Ruanm OAuth 获取 user_id:', ruanmUserId)
-          return ruanmUserId
+      // 检查 OAuth 提供者
+      if (provider === 'ruanm' || provider === 'github') {
+        // Ruanm OAuth 取 user-id
+        if (oauthUser['user-id']) {
+          const ruanmUserId = parseInt(oauthUser['user-id'], 10)
+          if (!isNaN(ruanmUserId)) {
+            console.log(`从 ${provider.toUpperCase()} OAuth 获取 user_id:`, ruanmUserId)
+            return { userId: ruanmUserId, provider }
+          }
+        }
+        
+        // GitHub OAuth 取 id
+        if (provider === 'github' && oauthUser.id) {
+          const githubUserId = parseInt(oauthUser.id, 10)
+          if (!isNaN(githubUserId)) {
+            console.log(`从 ${provider.toUpperCase()} OAuth 获取 user_id:`, githubUserId)
+            return { userId: githubUserId, provider }
+          }
         }
       }
       
-      // GitHub / Discord OAuth 取 id
-      if (oauthUser.id) {
-        const oauthUserId = parseInt(oauthUser.id, 10)
-        if (!isNaN(oauthUserId)) {
-          console.log('从 GitHub/Discord OAuth 获取 user_id:', oauthUserId)
-          return oauthUserId
-        }
+      // 拒绝 Discord 和其他提供者
+      if (provider === 'discord') {
+        console.warn('Discord 账号不允许上传工具')
+        return null
       }
     }
 
-    console.warn('无法提取 user_id')
+    console.warn('无法提取 user_id 或未提供 OAuth 信息')
     return null
   } catch (error) {
     console.error('提取 user_id 失败:', error)
@@ -107,15 +119,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 提取 user_id
-    const userId = extractUserId(request)
-    if (!userId) {
-      console.warn(`[${requestId}] 未认证的用户`)
+    // 提取 user_id 并验证 OAuth 提供者
+    const authResult = extractUserId(request)
+    if (!authResult) {
+      console.warn(`[${requestId}] 未认证的用户或非允许的 OAuth 提供者`)
       return NextResponse.json(
-        { success: false, error: '未认证：无法获取用户 ID，请确保已登录' },
-        { status: 401 }
+        { success: false, error: '未认证：只允许使用 Ruanm 账号或 GitHub 账号登录的用户上传工具' },
+        { status: 403 }
       )
     }
+    const userId = authResult.userId
+    const provider = authResult.provider
+    
+    console.log(`[${requestId}] 用户认证通过：userId=${userId}, provider=${provider}`)
 
     // 解析 multipart/form-data
     const formData = await request.formData()

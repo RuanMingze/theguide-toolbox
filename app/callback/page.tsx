@@ -26,7 +26,13 @@ function OAuthCallbackContent() {
       // 保存用户信息到本地存储
       try {
         const userProfile = JSON.parse(decodeURIComponent(user_profile))
-        localStorage.setItem('oauth_user', JSON.stringify(userProfile))
+        // 添加 OAuth 提供者类型
+        const userProfileWithProvider = {
+          ...userProfile,
+          provider: 'ruanm',
+          source: 'ruanm'
+        }
+        localStorage.setItem('oauth_user', JSON.stringify(userProfileWithProvider))
         localStorage.setItem('oauth_logged_in', 'true')
       } catch (e) {
         console.error('Failed to parse user profile:', e)

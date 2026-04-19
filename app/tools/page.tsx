@@ -140,6 +140,27 @@ const tools: Tool[] = [
   { id: "loan-calc", name: "贷款计算器", description: "计算贷款月供和利息", category: "生活工具", icon: Calculator },
   { id: "tip-calc", name: "小费计算器", description: "计算小费和分摊金额", category: "生活工具", icon: Percent },
   { id: "age-calc", name: "年龄计算器", description: "计算年龄和存活天数", category: "生活工具", icon: Calendar },
+  
+  // 新增 10 个原生工具
+  // 文本工具
+  { id: "word-counter", name: "中英文字数统计", description: "分别统计中文、英文、数字字数", category: "文本工具", icon: FileText },
+  { id: "slug-generator", name: "URL Slug 生成器", description: "将标题转换为 SEO 友好的 URL 路径", category: "文本工具", icon: Link2 },
+  
+  // 编码转换
+  { id: "jwt-generator", name: "JWT 生成器", description: "生成 JWT Token", category: "编码转换", icon: Lock },
+  { id: "xml-formatter", name: "XML 格式化", description: "格式化和美化 XML 文档", category: "编码转换", icon: Code },
+  
+  // 开发工具
+  { id: "meta-tag-generator", name: "Meta 标签生成器", description: "生成 SEO 优化的 HTML Meta 标签", category: "开发工具", icon: FileText },
+  { id: "robots-generator", name: "Robots.txt 生成器", description: "生成网站 Robots 协议文件", category: "开发工具", icon: FileText },
+  
+  // 安全工具
+  { id: "bcrypt-generator", name: "Bcrypt 加密", description: "生成 Bcrypt 哈希密码", category: "安全工具", icon: Shield },
+  { id: "uuid-converter", name: "UUID 格式转换", description: "转换 UUID 格式（带/不带横线）", category: "安全工具", icon: Hash },
+  
+  // 生活工具
+  { id: "discount-calc", name: "折扣计算器", description: "计算打折后的价格和节省金额", category: "生活工具", icon: Percent },
+  { id: "fuel-calc", name: "油耗计算器", description: "计算汽车油耗和费用", category: "生活工具", icon: Calculator },
 ]
 
 const categories = Array.from(new Set(tools.map(tool => tool.category)))
@@ -210,6 +231,16 @@ const toolNameTranslations: Record<string, string> = {
   "贷款计算器": "Loan Calculator",
   "小费计算器": "Tip Calculator",
   "年龄计算器": "Age Calculator",
+  "中英文字数统计": "Chinese/English Word Counter",
+  "URL Slug 生成器": "URL Slug Generator",
+  "JWT 生成器": "JWT Generator",
+  "XML 格式化": "XML Formatter",
+  "Meta 标签生成器": "Meta Tag Generator",
+  "Robots.txt 生成器": "Robots.txt Generator",
+  "Bcrypt 加密": "Bcrypt Hash Generator",
+  "UUID 格式转换": "UUID Format Converter",
+  "折扣计算器": "Discount Calculator",
+  "油耗计算器": "Fuel Consumption Calculator",
 }
 
 // 工具描述翻译
@@ -263,6 +294,16 @@ const toolDescriptionTranslations: Record<string, string> = {
   "计算贷款月供和利息": "Calculate loan monthly payments and interest",
   "计算小费和分摊金额": "Calculate tips and split amounts",
   "计算年龄和存活天数": "Calculate age and days lived",
+  "分别统计中文、英文、数字字数": "Count Chinese, English, and numbers separately",
+  "将标题转换为 SEO 友好的 URL 路径": "Convert titles to SEO-friendly URL paths",
+  "生成 JWT Token": "Generate JWT tokens",
+  "格式化和美化 XML 文档": "Format and beautify XML documents",
+  "生成 SEO 优化的 HTML Meta 标签": "Generate SEO-optimized HTML meta tags",
+  "生成网站 Robots 协议文件": "Generate website Robots.txt file",
+  "生成 Bcrypt 哈希密码": "Generate Bcrypt hash passwords",
+  "转换 UUID 格式（带/不带横线）": "Convert UUID format (with/without hyphens)",
+  "计算打折后的价格和节省金额": "Calculate discounted price and savings",
+  "计算汽车油耗和费用": "Calculate car fuel consumption and costs",
 }
 
 // Tool Modal Component
@@ -326,50 +367,46 @@ async function executeCustomCode(code: string): Promise<ExecuteResult> {
   // 2. 移除 TypeScript 接口定义（interface ... {}）
   processedCode = processedCode.replace(/interface\s+\w+\s*\{[^}]*\}/g, '')
   
-  // 3. 移除 TypeScript 泛型语法（仅限函数调用和类型定义中的泛型）
-  // 注意：不能删除 JSX 标签，所以要更精确地匹配
-  // 匹配函数调用后的泛型：func<Type>()
-  processedCode = processedCode.replace(/(\w)\s*<\s*[\w\s,\|&]+>\s*\(/g, '$1(')
-  // 匹配箭头函数泛型：<Type>() =>
-  processedCode = processedCode.replace(/<\s*[\w\s,\|&]+\s*>\s*\(\s*\)\s*=>/g, '() =>')
-  // 匹配类型断言：<Type>value（使用负向前瞻避免删除 JSX 标签）
-  // JSX 标签前面通常是空白或换行，而类型断言前面通常是标识符或括号
-  processedCode = processedCode.replace(/(?<=[\w\)])\s*<\s*\w+\s*>\s*(?=\w)/g, '')
-  
-  // 4. 移除 export default 关键字，并处理函数声明
+  // 3. 移除 export default 关键字，并处理函数声明
   processedCode = processedCode.replace(/export\s+default\s+function\s+/g, 'function ')
   processedCode = processedCode.replace(/export\s+default\s+/g, '')
   
-  // 5. 移除所有类型注解（: Type）- 使用多种模式确保完全清理
-  // 模式 1: 函数参数的类型注解 (: Type) 或 (: Type | Type)
-  processedCode = processedCode.replace(/:\s*\w+(\s*\|\s*\w+)*\s*([,)])/g, '$2')
-  // 模式 2: 函数参数的类型注解在括号内 (: Type})
-  processedCode = processedCode.replace(/:\s*\w+(\s*\|\s*\w+)*\s*(\})/g, '$2')
-  // 模式 3: 变量声明的类型注解 (: Type =)
-  processedCode = processedCode.replace(/:\s*\w+(\s*\|\s*\w+)*\s*(?=\s*=)/g, '')
-  // 模式 4: 箭头函数的返回类型 (: Type =>)
-  processedCode = processedCode.replace(/:\s*\w+(\s*\|\s*\w+)*\s*(?=\s*=>)/g, '')
-  // 模式 5: 清理对象解构中的类型注解（处理多行情况）
-  // 只匹配类型注解部分，使用更保守的模式
-  processedCode = processedCode.replace(/(\}\s*):\s*\{[\s\S]{0,500}?\}\s*\)/g, '$1)')
-  // 模式 6: 清理箭头函数参数后的多行类型注解（循环处理）
-  let prevCode2
-  do {
-    prevCode2 = processedCode
-    processedCode = processedCode.replace(/(\([^)]*)\s*:\s*[\w<>\s\|,\{\}\?\(\)]+\s*\)\s*=>/g, '$1) =>')
-  } while (processedCode !== prevCode2)
-  // 模式 7: 清理剩余的 `: {` 类型注解块（多行）- 限制最大长度避免误删
-  processedCode = processedCode.replace(/:\s*\{[^}]{0,200}?\}/g, '')
-  // 模式 8: 清理泛型类型注解（: Record<...>, : Array<...>, : Map<...> 等）
-  processedCode = processedCode.replace(/:\s*\w+\s*<[^>]*>/g, '')
-  // 模式 9: 清理复杂的泛型类型（嵌套泛型）
-  processedCode = processedCode.replace(/:\s*\w+\s*<\s*[^>]*<[^>]*>\s*>/g, '')
+  // 4. 移除类型注解 - 只移除简单的类型注解，保留泛型语法
+  // 4.1 移除 useState 等 hooks 的泛型类型（如 useState<string> -> useState）
+  processedCode = processedCode.replace(/(useState|useCallback|useMemo|useRef|useState)\s*<\s*[^>]+\s*>/g, '$1')
   
-  // 6. 清理多余的空白字符（括号内的空格）
+  // 4.2 移除函数参数的类型注解 - 只在函数括号内，且后面没有冒号（不是对象键值对）
+  // 先处理有联合类型的情况
+  processedCode = processedCode.replace(/(\w+)\s*:\s*\w+\s*\|\s*\w+([,)])/g, '$1$2')
+  // 处理简单类型注解（参数名：类型）
+  processedCode = processedCode.replace(/(\w+)\s*:\s*(string|number|boolean|any|null|undefined)\s*([,)])/g, '$1$3')
+  // 处理自定义类型（如 : ToolProps）
+  processedCode = processedCode.replace(/(\w+)\s*:\s*[A-Z]\w*\s*([,)])/g, '$1$2')
+  // 处理对象解构参数的类型注解（如 }: ToolProps) -> })
+  processedCode = processedCode.replace(/(\})\s*:\s*\w+/g, '$1')
+  
+  // 4.3 移除变量声明的类型注解（包括泛型类型如 Record<string, string>）
+  processedCode = processedCode.replace(/(const|let|var)\s+(\w+)\s*:\s*\w+\s*<[^>]+>\s*=/g, '$1 $2 =')
+  processedCode = processedCode.replace(/(const|let|var)\s+(\w+)\s*:\s*(string|number|boolean|any)\s*=/g, '$1 $2 =')
+  
+  // 4.4 移除数组类型注解（如 : string[] -> 删除）
+  processedCode = processedCode.replace(/:\s*\w+\[\]/g, '')
+  
+  // 4.5 移除箭头函数的返回类型注解（如 ): string => -> ) =>）
+  processedCode = processedCode.replace(/\)\s*:\s*(string|number|boolean|any|void)\s*=>/g, ') =>')
+  
+  // 4.6 移除对象参数的类型注解块（如 }: { children: React.ReactNode ... } -> }）
+  // 使用非贪婪匹配，从 }: 开始到第一个 } 结束
+  processedCode = processedCode.replace(/(\})\s*:\s*\{[^}]*\}/g, '$1')
+  
+  // 4.7 移除 TypeScript 类型断言（如 as 'cm' -> 删除）
+  processedCode = processedCode.replace(/\s+as\s+['"]?\w+['"]?/g, '')
+  
+  // 5. 清理多余的空白字符（括号内的空格）
   processedCode = processedCode.replace(/\(\s*\{/g, '({')
   processedCode = processedCode.replace(/\}\s*\)/g, '})')
   
-  // 7. 清理多余的空行和空白
+  // 6. 清理多余的空行和空白
   processedCode = processedCode.replace(/^\s*[\r\n]/gm, '\n')
   processedCode = processedCode.replace(/\n\s*\n\s*\n/g, '\n\n')
   
@@ -460,7 +497,7 @@ async function executeCustomCode(code: string): Promise<ExecuteResult> {
           
           // 提取更友好的错误信息
           let friendlyError = 'JSX 语法错误，请检查代码'
-          const errorMessage = babelError.message || String(babelError)
+          const errorMessage = (babelError as Error).message || String(babelError)
           
           // 检查是否是标签不匹配
           if (errorMessage.includes('Expected corresponding JSX closing tag')) {
@@ -697,7 +734,7 @@ function CustomToolWrapper({ toolData }: CustomToolWrapperProps) {
   )
 }
 
-// Individual Tool Implementations
+// 工具内容渲染组件
 function ToolContent({ toolId, customToolData }: ToolContentProps) {
   // 如果是自定义工具，直接渲染自定义组件
   if (customToolData) {
@@ -771,7 +808,6 @@ function ToolContent({ toolId, customToolData }: ToolContentProps) {
       return <ImageTool toolId={toolId} />
     case "file-converter":
       return <FileConverterTool />
-    // 新增工具
     case "ip-lookup":
       return <IpLookupTool />
     case "whois":
@@ -798,6 +834,26 @@ function ToolContent({ toolId, customToolData }: ToolContentProps) {
       return <TipCalcTool />
     case "age-calc":
       return <AgeCalcTool />
+    case "word-counter":
+      return <WordCounterTool />
+    case "slug-generator":
+      return <SlugGeneratorTool />
+    case "jwt-generator":
+      return <JwtGeneratorTool />
+    case "xml-formatter":
+      return <XmlFormatterTool />
+    case "meta-tag-generator":
+      return <MetaTagGeneratorTool />
+    case "robots-generator":
+      return <RobotsGeneratorTool />
+    case "bcrypt-generator":
+      return <BcryptGeneratorTool />
+    case "uuid-converter":
+      return <UuidConverterTool />
+    case "discount-calc":
+      return <DiscountCalcTool />
+    case "fuel-calc":
+      return <FuelCalcTool />
     default:
       return <PlaceholderTool />
   }
@@ -3978,6 +4034,934 @@ function PlaceholderTool() {
   )
 }
 
+// Word Counter Tool
+function WordCounterTool() {
+  const { lang } = useTranslation()
+  const [text, setText] = useState("")
+  
+  const stats = {
+    chinese: (text.match(/[\u4e00-\u9fa5]/g) || []).length,
+    english: (text.match(/[a-zA-Z]/g) || []).length,
+    numbers: (text.match(/[0-9]/g) || []).length,
+    spaces: (text.match(/\s/g) || []).length,
+    others: text.replace(/[\u4e00-\u9fa5a-zA-Z0-9\s]/g, "").length,
+  }
+  
+  const statLabels = lang === 'en' ? [
+    { label: "Chinese", value: stats.chinese },
+    { label: "English", value: stats.english },
+    { label: "Numbers", value: stats.numbers },
+    { label: "Spaces", value: stats.spaces },
+    { label: "Others", value: stats.others },
+  ] : [
+    { label: "中文", value: stats.chinese },
+    { label: "英文", value: stats.english },
+    { label: "数字", value: stats.numbers },
+    { label: "空格", value: stats.spaces },
+    { label: "其他", value: stats.others },
+  ]
+  
+  return (
+    <div className="space-y-4">
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder={lang === 'en' ? 'Enter or paste text here...' : '在此输入或粘贴文本...'}
+        className="h-40 w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+      />
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+        {statLabels.map((stat) => (
+          <div key={stat.label} className="rounded-lg bg-secondary p-3 text-center">
+            <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+            <div className="text-xs text-muted-foreground">{stat.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Slug Generator Tool
+function SlugGeneratorTool() {
+  const { lang } = useTranslation()
+  const [title, setTitle] = useState("")
+  const [slug, setSlug] = useState("")
+  
+  const generateSlug = useCallback((input: string) => {
+    return input
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+  }, [])
+  
+  useEffect(() => {
+    setSlug(generateSlug(title))
+  }, [title, generateSlug])
+  
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Title' : '标题'}
+        </label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={lang === 'en' ? 'Enter title...' : '输入标题...'}
+          className="w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+      
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'URL Slug' : 'URL 路径'}
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={slug}
+            readOnly
+            className="flex-1 rounded-lg border border-border bg-background p-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          <CopyButton text={slug} />
+        </div>
+      </div>
+      
+      <div className="rounded-lg bg-muted p-4">
+        <p className="text-sm text-muted-foreground">
+          {lang === 'en' ? 'Example: "Hello World! 123" → "hello-world-123"' : '示例："Hello World! 123" → "hello-world-123"'}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// JWT Generator Tool
+function JwtGeneratorTool() {
+  const { lang } = useTranslation()
+  const [header, setHeader] = useState('{"alg":"HS256","typ":"JWT"}')
+  const [payload, setPayload] = useState('{"sub":"1234567890","name":"John Doe","iat":1516239022}')
+  const [secret, setSecret] = useState("your-256-bit-secret")
+  const [token, setToken] = useState("")
+  
+  const generateToken = useCallback(() => {
+    try {
+      const headerBase64 = btoa(JSON.stringify(JSON.parse(header)))
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+      
+      const payloadBase64 = btoa(JSON.stringify(JSON.parse(payload)))
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+      
+      const signature = btoa(`${headerBase64}.${payloadBase64}.${secret}`)
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+      
+      setToken(`${headerBase64}.${payloadBase64}.${signature}`)
+    } catch (e) {
+      setToken(lang === 'en' ? 'Invalid JSON format' : 'JSON 格式错误')
+    }
+  }, [header, payload, secret, lang])
+  
+  useEffect(() => {
+    generateToken()
+  }, [generateToken])
+  
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Header (JSON)' : '头部 (JSON)'}
+        </label>
+        <textarea
+          value={header}
+          onChange={(e) => setHeader(e.target.value)}
+          className="h-24 w-full rounded-lg border border-border bg-background p-4 font-mono text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+      
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Payload (JSON)' : '载荷 (JSON)'}
+        </label>
+        <textarea
+          value={payload}
+          onChange={(e) => setPayload(e.target.value)}
+          className="h-24 w-full rounded-lg border border-border bg-background p-4 font-mono text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+      
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Secret' : '密钥'}
+        </label>
+        <input
+          type="text"
+          value={secret}
+          onChange={(e) => setSecret(e.target.value)}
+          className="w-full rounded-lg border border-border bg-background p-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+      
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Generated Token' : '生成的 Token'}
+        </label>
+        <div className="flex gap-2">
+          <textarea
+            value={token}
+            readOnly
+            className="h-32 flex-1 rounded-lg border border-border bg-background p-4 font-mono text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          <CopyButton text={token} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// XML Formatter Tool
+function XmlFormatterTool() {
+  const { lang } = useTranslation()
+  const [xml, setXml] = useState("")
+  const [formatted, setFormatted] = useState("")
+  
+  const formatXml = useCallback((input: string) => {
+    try {
+      const parsed = new DOMParser().parseFromString(input, 'text/xml')
+      const error = parsed.querySelector('parsererror')
+      if (error) {
+        return lang === 'en' ? 'Invalid XML format' : 'XML 格式错误'
+      }
+      
+      let formatted = ''
+      let indent = ''
+      const tab = '  '
+      
+      input
+        .replace(/>\s*</g, '><')
+        .split(/(?=<[^?])/)
+        .forEach(node => {
+          if (node.match(/^<\?/)) {
+            formatted += indent + node + '\n'
+          } else if (node.match(/^<\w/)) {
+            if (!node.match(/\/>$/)) {
+              formatted += indent + node + '\n'
+              indent += tab
+            } else {
+              formatted += indent + node + '\n'
+            }
+          } else if (node.match(/^<\//)) {
+            indent = indent.substring(tab.length)
+            formatted += indent + node + '\n'
+          } else if (node.match(/^<!/)) {
+            formatted += indent + node + '\n'
+          }
+        })
+      
+      return formatted.trim()
+    } catch (e) {
+      return lang === 'en' ? 'Invalid XML format' : 'XML 格式错误'
+    }
+  }, [lang])
+  
+  useEffect(() => {
+    setFormatted(formatXml(xml))
+  }, [xml, formatXml])
+  
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'XML Input' : 'XML 输入'}
+        </label>
+        <textarea
+          value={xml}
+          onChange={(e) => setXml(e.target.value)}
+          placeholder={lang === 'en' ? 'Enter XML...' : '输入 XML...'}
+          className="h-40 w-full rounded-lg border border-border bg-background p-4 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+      
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Formatted XML' : '格式化后的 XML'}
+        </label>
+        <div className="flex gap-2">
+          <textarea
+            value={formatted}
+            readOnly
+            className="h-40 flex-1 rounded-lg border border-border bg-background p-4 font-mono text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          <CopyButton text={formatted} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Meta Tag Generator Tool
+function MetaTagGeneratorTool() {
+  const { lang } = useTranslation()
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [keywords, setKeywords] = useState("")
+  const [author, setAuthor] = useState("")
+  const [ogImage, setOgImage] = useState("")
+  const [generated, setGenerated] = useState("")
+  
+  const generateMetaTags = useCallback(() => {
+    const tags = [
+      `  <meta charset="UTF-8">`,
+      `  <meta name="viewport" content="width=device-width, initial-scale=1.0">`,
+      title && `  <title>${title}</title>`,
+      description && `  <meta name="description" content="${description}">`,
+      keywords && `  <meta name="keywords" content="${keywords}">`,
+      author && `  <meta name="author" content="${author}">`,
+      ``,
+      `  <!-- Open Graph / Facebook -->`,
+      title && `  <meta property="og:title" content="${title}">`,
+      description && `  <meta property="og:description" content="${description}">`,
+      ogImage && `  <meta property="og:image" content="${ogImage}">`,
+      ``,
+      `  <!-- Twitter -->`,
+      `  <meta name="twitter:card" content="summary_large_image">`,
+      title && `  <meta name="twitter:title" content="${title}">`,
+      description && `  <meta name="twitter:description" content="${description}">`,
+    ].filter(Boolean).join('\n')
+    
+    setGenerated(`<head>\n${tags}\n</head>`)
+  }, [title, description, keywords, author, ogImage])
+  
+  useEffect(() => {
+    generateMetaTags()
+  }, [generateMetaTags])
+  
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block text-sm font-medium text-foreground">
+            {lang === 'en' ? 'Page Title' : '页面标题'}
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={lang === 'en' ? 'Page Title' : '页面标题'}
+            className="w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        
+        <div>
+          <label className="mb-2 block text-sm font-medium text-foreground">
+            {lang === 'en' ? 'Author' : '作者'}
+          </label>
+          <input
+            type="text"
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+            placeholder={lang === 'en' ? 'Author Name' : '作者姓名'}
+            className="w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+      </div>
+      
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Description' : '描述'}
+        </label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder={lang === 'en' ? 'Page description (150-160 characters)' : '页面描述（150-160 个字符）'}
+          className="h-24 w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+      
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Keywords' : '关键词'}
+        </label>
+        <input
+          type="text"
+          value={keywords}
+          onChange={(e) => setKeywords(e.target.value)}
+          placeholder={lang === 'en' ? 'keyword1, keyword2, keyword3' : '关键词 1, 关键词 2, 关键词 3'}
+          className="w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+      
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'OG Image URL' : 'Open Graph 图片 URL'}
+        </label>
+        <input
+          type="text"
+          value={ogImage}
+          onChange={(e) => setOgImage(e.target.value)}
+          placeholder="https://example.com/image.jpg"
+          className="w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+      
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Generated Meta Tags' : '生成的 Meta 标签'}
+        </label>
+        <div className="flex gap-2">
+          <textarea
+            value={generated}
+            readOnly
+            className="h-64 flex-1 rounded-lg border border-border bg-background p-4 font-mono text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          <CopyButton text={generated} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Robots Generator Tool
+function RobotsGeneratorTool() {
+  const { lang } = useTranslation()
+  const [allowAll, setAllowAll] = useState(true)
+  const [disallowPaths, setDisallowPaths] = useState("/admin/\n/private/\n/tmp/")
+  const [sitemapUrl, setSitemapUrl] = useState("https://example.com/sitemap.xml")
+  const [generated, setGenerated] = useState("")
+  
+  const generateRobots = useCallback(() => {
+    let content = "# Robots.txt\n\n"
+    
+    if (allowAll) {
+      content += "User-agent: *\nAllow: /\n\n"
+    } else {
+      content += "User-agent: *\n"
+      const paths = disallowPaths.split('\n').filter(p => p.trim())
+      paths.forEach(path => {
+        content += `Disallow: ${path.trim()}\n`
+      })
+      content += "\n"
+    }
+    
+    if (sitemapUrl.trim()) {
+      content += `Sitemap: ${sitemapUrl.trim()}\n`
+    }
+    
+    setGenerated(content)
+  }, [allowAll, disallowPaths, sitemapUrl])
+  
+  useEffect(() => {
+    generateRobots()
+  }, [generateRobots])
+  
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-border bg-background p-4">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={allowAll}
+            onChange={(e) => setAllowAll(e.target.checked)}
+            className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+          />
+          <span className="text-sm font-medium text-foreground">
+            {lang === 'en' ? 'Allow all crawlers' : '允许所有爬虫'}
+          </span>
+        </label>
+      </div>
+      
+      {!allowAll && (
+        <div>
+          <label className="mb-2 block text-sm font-medium text-foreground">
+            {lang === 'en' ? 'Disallowed Paths (one per line)' : '禁止访问的路径（每行一个）'}
+          </label>
+          <textarea
+            value={disallowPaths}
+            onChange={(e) => setDisallowPaths(e.target.value)}
+            className="h-32 w-full rounded-lg border border-border bg-background p-4 font-mono text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+      )}
+      
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Sitemap URL' : '网站地图 URL'}
+        </label>
+        <input
+          type="text"
+          value={sitemapUrl}
+          onChange={(e) => setSitemapUrl(e.target.value)}
+          placeholder="https://example.com/sitemap.xml"
+          className="w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+      
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Generated robots.txt' : '生成的 robots.txt'}
+        </label>
+        <div className="flex gap-2">
+          <textarea
+            value={generated}
+            readOnly
+            className="h-40 flex-1 rounded-lg border border-border bg-background p-4 font-mono text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          <CopyButton text={generated} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Bcrypt Generator Tool
+function BcryptGeneratorTool() {
+  const { lang } = useTranslation()
+  const [password, setPassword] = useState("")
+  const [rounds, setRounds] = useState(10)
+  const [hash, setHash] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  
+  const generateHash = useCallback(async () => {
+    if (!password) {
+      setHash("")
+      return
+    }
+    
+    setIsLoading(true)
+    
+    try {
+      // 方法 1: 尝试使用本地 bcryptjs（如果已安装）
+      let bcrypt: any
+      
+      try {
+        // 先尝试动态导入本地模块
+        const bcryptModule = await import('bcryptjs')
+        bcrypt = bcryptModule.default || bcryptModule
+      } catch (importError) {
+        // 如果本地没有安装，从 unpkg CDN 加载
+        console.log('本地未安装 bcryptjs，从 unpkg 加载...')
+        
+        // 检查是否已经加载过
+        if (!(window as any).dcodeIO) {
+          // 动态创建 script 标签加载 CDN
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement('script')
+            script.src = 'https://unpkg.com/bcryptjs@2.4.3/dist/bcrypt.min.js'
+            script.onload = () => resolve()
+            script.onerror = () => reject(new Error('CDN 加载失败'))
+            document.head.appendChild(script)
+          })
+        }
+        
+        // 等待一小段时间确保库完全加载
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        // 使用全局的 dcodeIO.bcrypt
+        bcrypt = (window as any).dcodeIO?.bcrypt
+        if (!bcrypt) {
+          throw new Error('无法加载 bcryptjs 库')
+        }
+      }
+      
+      // 生成盐值和哈希（bcryptjs 支持同步和异步 API）
+      // 使用同步 API 以确保兼容性
+      const salt = bcrypt.genSaltSync(rounds)
+      const hashed = bcrypt.hashSync(password, salt)
+      setHash(hashed)
+    } catch (e) {
+      console.error('Bcrypt error:', e)
+      setHash(lang === 'en' ? 'Generation failed' : '生成失败')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [password, rounds, lang])
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      generateHash()
+    }, 300) // 防抖 300ms
+    
+    return () => clearTimeout(timer)
+  }, [generateHash])
+  
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Password' : '密码'}
+        </label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder={lang === 'en' ? 'Enter password...' : '输入密码...'}
+          className="w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+      
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Rounds (Cost Factor)' : '轮数 (成本因子)'}
+        </label>
+        <input
+          type="range"
+          min="4"
+          max="14"
+          value={rounds}
+          onChange={(e) => setRounds(parseInt(e.target.value))}
+          className="w-full"
+        />
+        <div className="mt-2 text-center text-sm text-muted-foreground">
+          {rounds} {lang === 'en' ? 'rounds' : '轮'}
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {lang === 'en' 
+            ? 'Higher rounds = more secure but slower (recommended: 10-12)'
+            : '轮数越高 = 更安全但更慢（推荐：10-12）'}
+        </p>
+      </div>
+      
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Generated Hash' : '生成的哈希值'}
+        </label>
+        <div className="flex gap-2">
+          <textarea
+            value={hash}
+            readOnly
+            placeholder={isLoading ? (lang === 'en' ? 'Generating...' : '生成中...') : ''}
+            className="h-32 flex-1 rounded-lg border border-border bg-background p-4 font-mono text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          {hash && <CopyButton text={hash} />}
+        </div>
+      </div>
+      
+      <div className="rounded-lg bg-muted p-4">
+        <p className="text-sm text-muted-foreground">
+          {lang === 'en' 
+            ? '✓ Uses real Bcrypt algorithm (loaded from unpkg CDN)'
+            : '✓ 使用真实的 Bcrypt 算法'}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// UUID Converter Tool
+function UuidConverterTool() {
+  const { lang } = useTranslation()
+  const [input, setInput] = useState("")
+  const [output, setOutput] = useState("")
+  const [format, setFormat] = useState<'with-hyphens' | 'without-hyphens'>('with-hyphens')
+  
+  const convertUuid = useCallback((uuid: string, targetFormat: string) => {
+    const cleaned = uuid.replace(/[-\s]/g, '')
+    
+    if (!/^[0-9a-fA-F]{32}$/.test(cleaned)) {
+      return lang === 'en' ? 'Invalid UUID format' : 'UUID 格式无效'
+    }
+    
+    if (targetFormat === 'with-hyphens') {
+      return `${cleaned.substring(0, 8)}-${cleaned.substring(8, 12)}-${cleaned.substring(12, 16)}-${cleaned.substring(16, 20)}-${cleaned.substring(20)}`.toLowerCase()
+    } else {
+      return cleaned.toLowerCase()
+    }
+  }, [lang])
+  
+  useEffect(() => {
+    if (input.trim()) {
+      setOutput(convertUuid(input, format))
+    } else {
+      setOutput("")
+    }
+  }, [input, format, convertUuid])
+  
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Input UUID' : '输入 UUID'}
+        </label>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder={lang === 'en' ? 'Enter UUID...' : '输入 UUID...'}
+          className="w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+      
+      <div className="rounded-lg border border-border bg-background p-4">
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Output Format' : '输出格式'}
+        </label>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              checked={format === 'with-hyphens'}
+              onChange={() => setFormat('with-hyphens')}
+              className="h-4 w-4 border-border text-primary focus:ring-primary"
+            />
+            <span className="text-sm text-foreground">
+              {lang === 'en' ? 'With hyphens (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)' : '带横线（xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx）'}
+            </span>
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              checked={format === 'without-hyphens'}
+              onChange={() => setFormat('without-hyphens')}
+              className="h-4 w-4 border-border text-primary focus:ring-primary"
+            />
+            <span className="text-sm text-foreground">
+              {lang === 'en' ? 'Without hyphens (xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)' : '不带横线（xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx）'}
+            </span>
+          </label>
+        </div>
+      </div>
+      
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {lang === 'en' ? 'Converted UUID' : '转换后的 UUID'}
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={output}
+            readOnly
+            className="flex-1 rounded-lg border border-border bg-background p-4 font-mono text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          <CopyButton text={output} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Discount Calculator Tool
+function DiscountCalcTool() {
+  const { lang } = useTranslation()
+  const [originalPrice, setOriginalPrice] = useState("")
+  const [discountPercent, setDiscountPercent] = useState("")
+  
+  const original = parseFloat(originalPrice) || 0
+  const discount = parseFloat(discountPercent) || 0
+  
+  const discountedPrice = original * (1 - discount / 100)
+  const savings = original - discountedPrice
+  
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block text-sm font-medium text-foreground">
+            {lang === 'en' ? 'Original Price' : '原价'}
+          </label>
+          <input
+            type="number"
+            value={originalPrice}
+            onChange={(e) => setOriginalPrice(e.target.value)}
+            placeholder={lang === 'en' ? '0.00' : '0.00'}
+            className="w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        
+        <div>
+          <label className="mb-2 block text-sm font-medium text-foreground">
+            {lang === 'en' ? 'Discount (%)' : '折扣 (%)'}
+          </label>
+          <input
+            type="number"
+            value={discountPercent}
+            onChange={(e) => setDiscountPercent(e.target.value)}
+            placeholder={lang === 'en' ? '0' : '0'}
+            className="w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-lg bg-secondary p-4 text-center">
+          <p className="text-sm text-muted-foreground">{lang === 'en' ? 'Discounted Price' : '折后价'}</p>
+          <p className="text-2xl font-bold text-primary">{discountedPrice.toFixed(2)}</p>
+        </div>
+        
+        <div className="rounded-lg bg-secondary p-4 text-center">
+          <p className="text-sm text-muted-foreground">{lang === 'en' ? 'You Save' : '节省金额'}</p>
+          <p className="text-2xl font-bold text-green-600">{savings.toFixed(2)}</p>
+        </div>
+        
+        <div className="rounded-lg bg-secondary p-4 text-center">
+          <p className="text-sm text-muted-foreground">{lang === 'en' ? 'Final Price' : '最终价格'}</p>
+          <p className="text-2xl font-bold text-foreground">{discountedPrice.toFixed(2)}</p>
+        </div>
+      </div>
+      
+      {original > 0 && discount > 0 && (
+        <div className="rounded-lg bg-muted p-4">
+          <p className="text-sm text-muted-foreground">
+            {lang === 'en' 
+              ? `${discount}% off: $${original.toFixed(2)} - $${savings.toFixed(2)} = $${discountedPrice.toFixed(2)}`
+              : `${discount}% 折扣：${original.toFixed(2)} - ${savings.toFixed(2)} = ${discountedPrice.toFixed(2)}`
+            }
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Fuel Calculator Tool
+function FuelCalcTool() {
+  const { lang } = useTranslation()
+  const [distance, setDistance] = useState("")
+  const [fuelConsumption, setFuelConsumption] = useState("")
+  const [fuelPrice, setFuelPrice] = useState("")
+  
+  const dist = parseFloat(distance) || 0
+  const consumption = parseFloat(fuelConsumption) || 0
+  const price = parseFloat(fuelPrice) || 0
+  
+  const fuelNeeded = (dist / 100) * consumption
+  const totalCost = fuelNeeded * price
+  const costPerKm = dist > 0 ? totalCost / dist : 0
+  
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-3">
+        <div>
+          <label className="mb-2 block text-sm font-medium text-foreground">
+            {lang === 'en' ? 'Distance (km)' : '行驶距离 (公里)'}
+          </label>
+          <input
+            type="number"
+            value={distance}
+            onChange={(e) => setDistance(e.target.value)}
+            placeholder={lang === 'en' ? '0' : '0'}
+            className="w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        
+        <div>
+          <label className="mb-2 block text-sm font-medium text-foreground">
+            {lang === 'en' ? 'Fuel Consumption (L/100km)' : '油耗 (升/百公里)'}
+          </label>
+          <input
+            type="number"
+            value={fuelConsumption}
+            onChange={(e) => setFuelConsumption(e.target.value)}
+            placeholder={lang === 'en' ? '0' : '0'}
+            className="w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        
+        <div>
+          <label className="mb-2 block text-sm font-medium text-foreground">
+            {lang === 'en' ? 'Fuel Price (per L)' : '油价 (元/升)'}
+          </label>
+          <input
+            type="number"
+            value={fuelPrice}
+            onChange={(e) => setFuelPrice(e.target.value)}
+            placeholder={lang === 'en' ? '0.00' : '0.00'}
+            className="w-full rounded-lg border border-border bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-lg bg-secondary p-4 text-center">
+          <p className="text-sm text-muted-foreground">{lang === 'en' ? 'Fuel Needed' : '所需燃油'}</p>
+          <p className="text-2xl font-bold text-primary">{fuelNeeded.toFixed(2)} L</p>
+        </div>
+        
+        <div className="rounded-lg bg-secondary p-4 text-center">
+          <p className="text-sm text-muted-foreground">{lang === 'en' ? 'Total Cost' : '总费用'}</p>
+          <p className="text-2xl font-bold text-green-600">{totalCost.toFixed(2)}</p>
+        </div>
+        
+        <div className="rounded-lg bg-secondary p-4 text-center">
+          <p className="text-sm text-muted-foreground">{lang === 'en' ? 'Cost per km' : '每公里费用'}</p>
+          <p className="text-2xl font-bold text-foreground">{costPerKm.toFixed(2)}</p>
+        </div>
+      </div>
+      
+      {dist > 0 && consumption > 0 && price > 0 && (
+        <div className="rounded-lg bg-muted p-4">
+          <p className="text-sm text-muted-foreground">
+            {lang === 'en'
+              ? `${dist} km at ${consumption} L/100km uses ${fuelNeeded.toFixed(2)} L, costing ${totalCost.toFixed(2)} at ${price}/L`
+              : `${dist} 公里，油耗${consumption} 升/百公里，需要${fuelNeeded.toFixed(2)} 升燃油，费用${totalCost.toFixed(2)} 元（油价${price} 元/升）`
+            }
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Favorite Button Component - 独立组件以确保状态正确更新
+function FavoriteButton({ 
+  toolId,
+  toolName,
+  toolUrl,
+  toolDescription,
+  toolCategory,
+  toggleFavorite 
+}: { 
+  toolId: string
+  toolName: string
+  toolUrl: string
+  toolDescription: string
+  toolCategory: string
+  toggleFavorite: (item: any) => void
+}) {
+  const { isFavorite: checkIsFavorite } = useFavorites()
+  const [isFav, setIsFav] = useState(() => checkIsFavorite(`tool-${toolId}`))
+  
+  // 监听收藏变化
+  useEffect(() => {
+    setIsFav(checkIsFavorite(`tool-${toolId}`))
+  }, [checkIsFavorite, toolId])
+  
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    toggleFavorite({
+      type: 'tool',
+      name: toolName,
+      url: toolUrl,
+      description: toolDescription,
+      category: toolCategory,
+    })
+    // 立即更新状态，不等待父组件重新渲染
+    setIsFav(prev => !prev)
+  }
+  
+  return (
+    <button
+      onClick={handleClick}
+      className="absolute right-2 top-2 rounded-full p-1.5 transition-colors hover:bg-secondary"
+    >
+      <Heart
+        className={`h-4 w-4 ${
+          isFav
+            ? "fill-red-500 text-red-500"
+            : "text-muted-foreground"
+        }`}
+      />
+    </button>
+  )
+}
+
 // Main Page Component
 export default function ToolsPage() {
   const { t, lang } = useTranslation()
@@ -4081,11 +5065,17 @@ export default function ToolsPage() {
       
       setImportSuccess(true)
       
-      // 1 秒后关闭对话框
-      setTimeout(() => {
-        setImportDialogOpen(false)
-        setImportSuccess(false)
-      }, 1500)
+      // 清空文件输入
+      const fileInput = document.getElementById('tool-file-input')
+      if (fileInput) {
+        fileInput.value = ''
+      }
+      
+      // 不再自动关闭对话框，让用户手动关闭
+      // setTimeout(() => {
+      //   setImportDialogOpen(false)
+      //   setImportSuccess(false)
+      // }, 1500)
       
     } catch (error) {
       console.error('Import error:', error)
@@ -4215,7 +5205,6 @@ export default function ToolsPage() {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {categoryTools.map((tool) => {
                   const Icon = tool.icon
-                  const isFav = isFavorite(`tool-${tool.id}`)
                   const displayToolName = lang === 'en' && toolNameTranslations[tool.name] 
                     ? toolNameTranslations[tool.name] 
                     : tool.name
@@ -4240,27 +5229,14 @@ export default function ToolsPage() {
                           </p>
                         </div>
                       </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          toggleFavorite({
-                            type: 'tool',
-                            name: tool.name,
-                            url: `/tools?tool=${tool.id}`,
-                            description: tool.description,
-                            category: tool.category,
-                          })
-                        }}
-                        className="absolute right-2 top-2 rounded-full p-1.5 transition-colors hover:bg-secondary"
-                      >
-                        <Heart
-                          className={`h-4 w-4 ${
-                            isFav
-                              ? "fill-red-500 text-red-500"
-                              : "text-muted-foreground"
-                          }`}
-                        />
-                      </button>
+                      <FavoriteButton
+                        toolId={tool.id}
+                        toolName={tool.name}
+                        toolUrl={`/tools?tool=${tool.id}`}
+                        toolDescription={tool.description}
+                        toolCategory={tool.category}
+                        toggleFavorite={toggleFavorite}
+                      />
                     </div>
                   )
                 })}

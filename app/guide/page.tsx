@@ -246,6 +246,31 @@ const sites: Site[] = [
   { name: "Audacity", url: "https://audacityteam.org", description: "音频编辑软件", category: "多媒体工具" },
   { name: "HandBrake", url: "https://handbrake.fr", description: "视频转码工具", category: "多媒体工具" },
   { name: "GIMP", url: "https://gimp.org", description: "开源图像编辑", category: "多媒体工具" },
+  
+  // 新增 15 个网站
+  // AI 与机器学习
+  { name: "Groq", url: "https://groq.com", description: "高性能 AI 推理芯片", category: "AI 工具" },
+  { name: "Together AI", url: "https://together.ai", description: "开源模型云平台", category: "AI 工具" },
+  { name: "Anakin AI", url: "https://anakin.ai", description: "AI 应用构建平台", category: "AI 工具" },
+  
+  // 开发工具
+  { name: "Bun", url: "https://bun.sh", description: "快速 JavaScript 运行时", category: "开发工具" },
+  { name: "Deno", url: "https://deno.com", description: "现代 JavaScript 运行时", category: "开发工具" },
+  { name: "Turso", url: "https://turso.tech", description: "边缘数据库", category: "开发工具" },
+  
+  // 设计资源
+  { name: "Heroicons", url: "https://heroicons.com", description: "精美 SVG 图标库", category: "设计资源" },
+  { name: "Phosphor Icons", url: "https://phosphoricons.com", description: "灵活图标系统", category: "设计资源" },
+  
+  // 云服务
+  { name: "Neon", url: "https://neon.tech", description: "无服务器 PostgreSQL", category: "云服务" },
+  { name: "Clerk", url: "https://clerk.com", description: "用户认证服务", category: "云服务" },
+  { name: "Convex", url: "https://convex.dev", description: "实时后端平台", category: "云服务" },
+  
+  // 效率工具
+  { name: "Arc Browser", url: "https://arc.net", description: "现代化浏览器", category: "效率工具" },
+  { name: "Raycast", url: "https://raycast.com", description: "macOS 效率启动器", category: "效率工具" },
+  { name: "Zapier", url: "https://zapier.com", description: "工作流自动化工具", category: "效率工具" },
 ]
 
 const categories = Array.from(new Set(sites.map(site => site.category)))

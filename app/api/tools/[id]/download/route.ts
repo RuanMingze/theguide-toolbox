@@ -3,10 +3,10 @@ import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'edge'
 
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY
+const supabaseUrl = process.env.SUPABASE_URL || 'https://example.com'
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || '123456789'
 
-const supabase = createClient(supabaseUrl || '', supabaseServiceKey || '', {
+const supabase = createClient(supabaseUrl || 'https://example.com', supabaseServiceKey || '123456789', {
   auth: {
     autoRefreshToken: false,
     persistSession: false

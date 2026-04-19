@@ -1,6 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
+import { DndContext, DragEndEvent, closestCorners, useSensor, useSensors, PointerSensor } from "@dnd-kit/core"
+import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { Navbar } from "@/components/navbar"
 import { useAuth } from "@/components/auth-provider"
 import { useSettings } from "@/hooks/use-settings"
@@ -24,7 +27,8 @@ import {
   User,
   Heart,
   X,
-  ClipboardList
+  ClipboardList,
+  GripVertical
 } from "lucide-react"
 import Link from "next/link"
 import { festivalTranslations } from "@/lib/translations"
@@ -301,7 +305,7 @@ function Calendar({ lang }: { lang: string }) {
 }
 
 // 天气组件
-function Weather({ lang, userLocation }: { lang: string; userLocation: string | null }) {
+const Weather = React.memo(function Weather({ lang, userLocation }: { lang: string; userLocation: string | null }) {
   const [isMounted, setIsMounted] = useState(false)
   const [location, setLocation] = useState<string | null>(null)
   const [weatherLang, setWeatherLang] = useState(lang)
@@ -402,7 +406,7 @@ function Weather({ lang, userLocation }: { lang: string; userLocation: string | 
         const geoip0Module = await import('geoip0')
         
         // 检查正确的导出方式
-        const GeoIP0 = geoip0Module.default || geoip0Module.geoip0
+        const GeoIP0 = geoip0Module.default || geoip0Module
         
         if (!GeoIP0) {
           console.warn('geoip0 module not found')
@@ -763,7 +767,58 @@ function Weather({ lang, userLocation }: { lang: string; userLocation: string | 
       </div>
     </div>
   )
-}
+})
+
+// 可排序组件包装器
+const SortableItem = React.memo(function SortableItem({ 
+  id, 
+  children, 
+  isEditMode,
+  onRemove
+}: { 
+  id: string
+  children: React.ReactNode
+  isEditMode: boolean
+  onRemove?: (id: string) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative group">
+      {isEditMode && (
+        <>
+          <button
+            {...attributes}
+            {...listeners}
+            className="absolute -left-3 top-1/2 -translate-y-1/2 rounded-full bg-primary p-1.5 text-primary-foreground shadow-lg transition-all hover:scale-110 z-10 cursor-grab active:cursor-grabbing"
+            title="拖动排序"
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+          {onRemove && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onRemove(id)
+              }}
+              className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground shadow-lg transition-all hover:scale-110 z-10"
+              title="删除组件"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </>
+      )}
+      {children}
+    </div>
+  )
+})
 
 // 快捷入口卡片
 function QuickAccessCard({ 
@@ -808,6 +863,8 @@ export default function HomePage() {
   const [todayFestival, setTodayFestival] = useState<{name: string; description: string} | null>(null)
   const [showNotification, setShowNotification] = useState(false)
   const [greeting, setGreeting] = useState<string>('欢迎回来')
+  const [customGreetingTemplate, setCustomGreetingTemplate] = useState<string>('')
+  const [showGreetingEditor, setShowGreetingEditor] = useState(false)
   const [userLocation, setUserLocation] = useState<string | null>(null)
   const [isEditMode, setIsEditMode] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
@@ -819,6 +876,7 @@ export default function HomePage() {
     quickAccess: true,
     greeting: true,
   })
+  const [componentOrder, setComponentOrder] = useState<string[]>(['timeDisplay', 'weather', 'todoList', 'calendar', 'quickAccess', 'greeting'])
   
   // 翻译 Hook
   const { lang, t, loading: translationLoading } = useTranslation()
@@ -839,39 +897,17 @@ export default function HomePage() {
     if (savedComponents) {
       setVisibleComponents(JSON.parse(savedComponents))
     }
-  }, [])
-
-  useEffect(() => {
-    // 监控壁纸变化
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-          const root = document.documentElement
-          const wallpaper = root.style.getPropertyValue('--custom-wallpaper')
-          console.log('[MutationObserver] Wallpaper changed:', wallpaper)
-        }
-      })
-    })
     
-    const root = document.documentElement
-    observer.observe(root, { attributes: true, attributeFilter: ['style'] })
+    // 加载组件顺序设置
+    const savedOrder = localStorage.getItem('theguide-component-order')
+    if (savedOrder) {
+      setComponentOrder(JSON.parse(savedOrder))
+    }
     
-    // 定期检查 computed style
-    const interval = setInterval(() => {
-      const body = document.body
-      const computedStyle = getComputedStyle(body)
-      console.log('[Interval] ===== 壁纸检查 =====')
-      console.log('[Interval] Computed background-image:', computedStyle.backgroundImage)
-      console.log('[Interval] Computed background-color:', computedStyle.backgroundColor)
-      console.log('[Interval] CSS variable --custom-wallpaper:', root.style.getPropertyValue('--custom-wallpaper'))
-      console.log('[Interval] CSS variable --background:', getComputedStyle(root).getPropertyValue('--background'))
-      console.log('[Interval] body.style.backgroundImage:', body.style.backgroundImage)
-      console.log('[Interval] body.style.backgroundColor:', body.style.backgroundColor)
-    }, 1000)
-    
-    return () => {
-      observer.disconnect()
-      clearInterval(interval)
+    // 加载自定义欢迎语模板
+    const savedGreetingTemplate = localStorage.getItem('theguide-greeting-template')
+    if (savedGreetingTemplate) {
+      setCustomGreetingTemplate(savedGreetingTemplate)
     }
   }, [])
 
@@ -913,7 +949,7 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
-    // 检查今天是否有节日
+    // 检查今天是否有节日（只在组件挂载时检查一次）
     const today = new Date()
     const month = today.getMonth()
     const day = today.getDate()
@@ -943,7 +979,7 @@ export default function HomePage() {
         setShowNotification(true)
       }
     }
-  }, [lang])
+  }, [])
 
   const closeNotification = () => {
     setShowNotification(false)
@@ -965,8 +1001,83 @@ export default function HomePage() {
       quickAccess: true,
       greeting: true,
     })
+    setComponentOrder(['timeDisplay', 'weather', 'todoList', 'calendar', 'quickAccess', 'greeting'])
+    localStorage.removeItem('theguide-component-order')
     setIsEditMode(false)
   }
+
+  // 替换欢迎语中的变量
+  const replaceGreetingVariables = (template: string): string => {
+    if (!template) return greeting
+    
+    let result = template
+    
+    // 替换用户名
+    if (isAuthenticated && user) {
+      result = result.replace(/%username%/g, user.name)
+    } else {
+      result = result.replace(/%username%/g, '用户')
+    }
+    
+    // 替换工具箱版本
+    result = result.replace(/%toolboxver%/g, '2.1.3')
+    
+    // 替换时间问候语
+    const hour = new Date().getHours()
+    let timeGreeting = ''
+    if (hour >= 5 && hour < 9) {
+      timeGreeting = '早上好'
+    } else if (hour >= 9 && hour < 12) {
+      timeGreeting = '上午好'
+    } else if (hour >= 12 && hour < 14) {
+      timeGreeting = '中午好'
+    } else if (hour >= 14 && hour < 18) {
+      timeGreeting = '下午好'
+    } else if (hour >= 18 && hour < 22) {
+      timeGreeting = '晚上好'
+    } else {
+      timeGreeting = '夜深了'
+    }
+    result = result.replace(/%timew%/g, timeGreeting)
+    
+    return result
+  }
+
+  // 保存自定义欢迎语
+  const handleSaveGreetingTemplate = (template: string) => {
+    setCustomGreetingTemplate(template)
+    localStorage.setItem('theguide-greeting-template', template)
+    setShowGreetingEditor(false)
+  }
+
+  // 重置欢迎语
+  const handleResetGreeting = () => {
+    setCustomGreetingTemplate('')
+    localStorage.removeItem('theguide-greeting-template')
+    setShowGreetingEditor(false)
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    
+    if (over && active.id !== over.id) {
+      setComponentOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string)
+        const newIndex = items.indexOf(over.id as string)
+        const newOrder = arrayMove(items, oldIndex, newIndex)
+        localStorage.setItem('theguide-component-order', JSON.stringify(newOrder))
+        return newOrder
+      })
+    }
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    })
+  )
 
   return (
     <div className="min-h-screen bg-transparent">
@@ -1079,14 +1190,26 @@ export default function HomePage() {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Hero Section */}
         {visibleComponents.greeting && (
-          <div className="mb-8 text-center relative group">
+          <div className="mb-8 text-center relative">
             {isEditMode && (
-              <button
-                onClick={() => toggleComponent('greeting')}
-                className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <>
+                <button
+                  onClick={() => toggleComponent('greeting')}
+                  className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground shadow-lg transition-all hover:scale-110"
+                  title="删除问候语组件"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setShowGreetingEditor(true)}
+                  className="absolute -left-2 -top-2 rounded-full bg-primary p-1.5 text-primary-foreground shadow-lg transition-all hover:scale-110"
+                  title="自定义欢迎语"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+              </>
             )}
             {!isLoading && isAuthenticated && user ? (
               <div className="flex flex-col items-center gap-4">
@@ -1103,117 +1226,187 @@ export default function HomePage() {
                     </div>
                   )}
                   <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    {t(greeting)}，<span className="text-primary">{user.name}</span>
+                    {customGreetingTemplate && customGreetingTemplate.includes('%username%') 
+                      ? replaceGreetingVariables(customGreetingTemplate)
+                      : `${replaceGreetingVariables(customGreetingTemplate) || t(greeting)}，<span className="text-primary">${user.name}</span>`
+                    }
                   </h1>
                 </div>
               </div>
             ) : (
               <div>
                 <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                  {t('欢迎使用')} <span className="text-primary">TheGuide</span> {t('工具箱')}
+                  {customGreetingTemplate 
+                    ? replaceGreetingVariables(customGreetingTemplate)
+                    : (
+                      <>
+                        {t('欢迎使用')} <span className="text-primary">TheGuide</span> {t('工具箱')}
+                      </>
+                    )
+                  }
                 </h1>
               </div>
             )}
           </div>
         )}
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-          {/* 左侧列：时钟、天气、待办 */}
-          <div className={`flex flex-col gap-6 ${!visibleComponents.calendar ? 'col-span-2 justify-self-center w-full max-w-[calc(100%-320px)]' : ''}`}>
-            {visibleComponents.timeDisplay && (
-              <div className="relative group">
-                {isEditMode && (
-                  <button
-                    onClick={() => toggleComponent('timeDisplay')}
-                    className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-                <TimeDisplay />
-              </div>
-            )}
-
-            {visibleComponents.weather && (
-              <div className="relative group">
-                {isEditMode && (
-                  <button
-                    onClick={() => toggleComponent('weather')}
-                    className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-                <Weather lang={lang} userLocation={userLocation} />
-              </div>
-            )}
-
-            {visibleComponents.todoList && (
-              <div className="relative group">
-                {isEditMode && (
-                  <button
-                    onClick={() => toggleComponent('todoList')}
-                    className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-                <TodoList lang={lang} />
-              </div>
-            )}
-          </div>
-
-          {/* 右侧列：日历 */}
-          {visibleComponents.calendar && (
-            <div className="relative group">
-              {isEditMode && (
+        {/* 欢迎语编辑器对话框 */}
+        {showGreetingEditor && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowGreetingEditor(false)}>
+            <div className="bg-card rounded-lg shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-foreground">
+                  {lang === 'en' ? 'Customize Greeting' : '自定义欢迎语'}
+                </h3>
                 <button
-                  onClick={() => toggleComponent('calendar')}
-                  className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10"
+                  onClick={() => setShowGreetingEditor(false)}
+                  className="rounded-full p-1 hover:bg-secondary"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5 text-muted-foreground" />
                 </button>
-              )}
-              <Calendar lang={lang} />
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    {lang === 'en' ? 'Greeting Template' : '欢迎语模板'}
+                  </label>
+                  <textarea
+                    value={customGreetingTemplate}
+                    onChange={(e) => setCustomGreetingTemplate(e.target.value)}
+                    placeholder={lang === 'en' ? 'e.g., Good morning, %username%!' : '例如：早上好，%username%！'}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none min-h-[100px]"
+                  />
+                </div>
+                
+                <div className="rounded-md bg-muted p-3">
+                  <h4 className="text-sm font-medium text-foreground mb-2">
+                    {lang === 'en' ? 'Available Variables:' : '可用变量：'}
+                  </h4>
+                  <ul className="space-y-1 text-xs text-muted-foreground">
+                    <li>• <code className="bg-secondary px-1 py-0.5 rounded">%username%</code> - {lang === 'en' ? 'Username (or "用户" if not logged in)' : '用户名（未登录时显示"用户"）'}</li>
+                    <li>• <code className="bg-secondary px-1 py-0.5 rounded">%toolboxver%</code> - {lang === 'en' ? 'Toolbox version (2.1.3)' : '工具箱版本（2.1.3）'}</li>
+                    <li>• <code className="bg-secondary px-1 py-0.5 rounded">%timew%</code> - {lang === 'en' ? 'Time-based greeting (e.g., 早上好，下午好)' : '时间问候语（如：早上好、下午好）'}</li>
+                  </ul>
+                </div>
+                
+                <div className="rounded-md bg-primary/10 p-3">
+                  <h4 className="text-sm font-medium text-primary mb-2">
+                    {lang === 'en' ? 'Preview:' : '预览：'}
+                  </h4>
+                  <p className="text-sm text-foreground">
+                    {replaceGreetingVariables(customGreetingTemplate) || (lang === 'en' ? 'No custom greeting' : '暂无自定义欢迎语')}
+                  </p>
+                </div>
+                
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => handleSaveGreetingTemplate(customGreetingTemplate)}
+                    className="flex-1 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90"
+                  >
+                    {lang === 'en' ? 'Save' : '保存'}
+                  </button>
+                  <button
+                    onClick={handleResetGreeting}
+                    className="flex-1 rounded-md bg-secondary text-foreground px-4 py-2 text-sm font-medium hover:bg-secondary/80"
+                  >
+                    {lang === 'en' ? 'Reset' : '重置'}
+                  </button>
+                  <button
+                    onClick={() => setShowGreetingEditor(false)}
+                    className="flex-1 rounded-md bg-background border border-border px-4 py-2 text-sm font-medium hover:bg-secondary"
+                  >
+                    {lang === 'en' ? 'Cancel' : '取消'}
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-
-        {/* Quick Access */}
-        {visibleComponents.quickAccess && (
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 relative group">
-            {isEditMode && (
-              <button
-                onClick={() => toggleComponent('quickAccess')}
-                className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-            <QuickAccessCard
-              href="/guide"
-              icon={Compass}
-              title={t('网站导航')}
-              description={t('精选 100+ 优质网站，快速访问')}
-              gradient="bg-primary"
-            />
-            <QuickAccessCard
-              href="/tools"
-              icon={Wrench}
-              title={t('实用工具')}
-              description={t('40+ 在线工具，提升效率')}
-              gradient="bg-accent"
-            />
-            <QuickAccessCard
-              href="/favorites"
-              icon={Heart}
-              title={t('我的收藏')}
-              description={t('快速访问收藏的工具和网站')}
-              gradient="bg-red-500"
-            />
           </div>
         )}
+
+        {/* Draggable Components */}
+        <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
+          <SortableContext items={componentOrder} strategy={verticalListSortingStrategy}>
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+              <div className="flex flex-col gap-6">
+                {componentOrder.map((componentId) => {
+                  if (!visibleComponents[componentId]) return null
+                  if (['timeDisplay', 'weather', 'todoList'].includes(componentId)) {
+                    return (
+                      <SortableItem 
+                        key={componentId} 
+                        id={componentId} 
+                        isEditMode={isEditMode}
+                        onRemove={toggleComponent}
+                      >
+                        {componentId === 'timeDisplay' && <TimeDisplay />}
+                        {componentId === 'weather' && <Weather lang={lang} userLocation={userLocation} />}
+                        {componentId === 'todoList' && <TodoList lang={lang} />}
+                      </SortableItem>
+                    )
+                  }
+                  return null
+                })}
+              </div>
+              
+              <div className="flex flex-col gap-6">
+                {componentOrder.map((componentId) => {
+                  if (!visibleComponents[componentId]) return null
+                  if (['calendar'].includes(componentId)) {
+                    return (
+                      <SortableItem 
+                        key={componentId} 
+                        id={componentId} 
+                        isEditMode={isEditMode}
+                        onRemove={toggleComponent}
+                      >
+                        {componentId === 'calendar' && <Calendar lang={lang} />}
+                      </SortableItem>
+                    )
+                  }
+                  return null
+                })}
+              </div>
+            </div>
+            
+            {/* Quick Access - Full Width */}
+            {visibleComponents.quickAccess && (
+              <div className="mt-8 relative">
+                {isEditMode && (
+                  <button
+                    onClick={() => toggleComponent('quickAccess')}
+                    className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground shadow-lg transition-all hover:scale-110 z-10"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <QuickAccessCard
+                    href="/guide"
+                    icon={Compass}
+                    title={t('网站导航')}
+                    description={t('精选 150+ 优质网站，快速访问')}
+                    gradient="bg-primary"
+                  />
+                  <QuickAccessCard
+                    href="/tools"
+                    icon={Wrench}
+                    title={t('实用工具')}
+                    description={t('70+ 在线工具，提升效率')}
+                    gradient="bg-accent"
+                  />
+                  <QuickAccessCard
+                    href="/favorites"
+                    icon={Heart}
+                    title={t('我的收藏')}
+                    description={t('快速访问收藏的工具和网站')}
+                    gradient="bg-red-500"
+                  />
+                </div>
+              </div>
+            )}
+          </SortableContext>
+        </DndContext>
       </main>
     </div>
   )
