@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "prebuild": "node scripts/copy-examples.js",
     "start": "next start",
     "postinstall": "node scripts/fix-next-on-pages-version.js",
     "lint": "eslint ."
