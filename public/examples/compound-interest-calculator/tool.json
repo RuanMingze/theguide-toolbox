@@ -1,0 +1,9 @@
+{
+  "name": "复利计算器",
+  "description": "计算复利投资收益，支持定期定额投资、通胀调整，可视化资产增长曲线",
+  "category": "金融工具",
+  "icon": "TrendingUp",
+  "author": "TheGuide Toolbox",
+  "version": "1.0.0",
+  "tags": ["复利", "投资", "理财", "收益计算", "定投", "资产管理"]
+}

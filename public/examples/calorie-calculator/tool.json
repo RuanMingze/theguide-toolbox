@@ -1,0 +1,9 @@
+{
+  "name": "卡路里计算器",
+  "description": "科学计算每日所需卡路里摄入量，支持多种活动水平和目标设置",
+  "category": "健康工具",
+  "icon": "Heart",
+  "author": "TheGuide Toolbox",
+  "version": "1.0.0",
+  "tags": ["卡路里", "健康", "减肥", "增肌", "BMR", "TDEE"]
+}
