@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Compass, Wrench, Menu, X, LogIn, LogOut, User, ChevronDown, ExternalLink, Heart, Settings, Github, MessageSquare } from "lucide-react"
+import { Home, Compass, Wrench, Menu, X, LogIn, LogOut, User, ChevronDown, ExternalLink, Heart, Settings, Github, MessageSquare, Mail } from "lucide-react"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth-provider"
