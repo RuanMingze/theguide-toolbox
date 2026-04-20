@@ -1228,7 +1228,12 @@ export default function HomePage() {
                   <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                     {customGreetingTemplate && customGreetingTemplate.includes('%username%') 
                       ? replaceGreetingVariables(customGreetingTemplate)
-                      : `${replaceGreetingVariables(customGreetingTemplate) || t(greeting)}，<span className="text-primary">${user.name}</span>`
+                      : (
+                        <>
+                          {replaceGreetingVariables(customGreetingTemplate) || t(greeting)}，
+                          <span className="text-primary">{user.name}</span>
+                        </>
+                      )
                     }
                   </h1>
                 </div>
